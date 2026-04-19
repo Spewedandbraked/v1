@@ -1,0 +1,16 @@
+{
+  "bindings": {
+    "MoveLeft": 65,
+    "MoveUp": 32,
+    "Sprint": 65505,
+    "MoveBackward": 83,
+    "Jump": 32,
+    "ToggleGrid": 71,
+    "InvertY": 89,
+    "MoveRight": 68,
+    "InvertX": 88,
+    "MoveForward": 87,
+    "MoveDown": 65507,
+    "ToggleMenu": 65289
+  }
+}
