@@ -256,14 +256,14 @@ impl Game {
         
         // Левая рука (ЛКМ) — слева-снизу: +X (поменяно)
         if let Some(ref grabbed) = self.player.grabbed_left {
-            let pos = Vec3::new(0.55, -0.45, 1.0);
+            let pos = Vec3::new(0.9, -0.6, 0.03);
             draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
             draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
         }
         
         // Правая рука (ПКМ) — справа-снизу: -X (поменяно)
         if let Some(ref grabbed) = self.player.grabbed_right {
-            let pos = Vec3::new(-0.55, -0.45, 1.0);
+            let pos = Vec3::new(-0.9, -0.6, 0.001);
             draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
             draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
         }
