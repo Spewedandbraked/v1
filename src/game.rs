@@ -54,6 +54,8 @@ impl Game {
     }
 
     fn update_gameplay(&mut self, delta_time: f32) {
+        let dt = delta_time.min(0.1);
+
         if self.config.is_action_just_pressed(Action::ToggleGrid) {
             self.world.toggle_grid();
         }
@@ -69,16 +71,21 @@ impl Game {
 
         if self.config.is_action_just_pressed(Action::Interact) {
             if self.player.grabbed_object.is_some() {
+                let throw_force = 12.0;
                 let forward = self.player.transform.forward();
-                let drop_pos = self.player.get_eye_position() + forward * 3.0;
+                let eye_pos = self.player.get_eye_position();
+                
                 if let Some(interactable) = self.world.interactables.iter_mut().find(|i| i.is_grabbed) {
-                    interactable.position = drop_pos;
+                    interactable.position = eye_pos + forward * 1.5;
+                    interactable.velocity = forward * throw_force + Vec3::new(0.0, 3.0, 0.0);
+                    interactable.is_physics_active = true;
                     interactable.is_grabbed = false;
                 }
                 self.player.grabbed_object = None;
             } else {
                 let eye_pos = self.player.get_eye_position();
                 let forward = self.player.transform.forward();
+
                 if let Some((idx, _)) = self.collision_system.raycast_interactable(
                     eye_pos,
                     forward,
@@ -87,26 +94,90 @@ impl Game {
                 ) {
                     let interactable = &mut self.world.interactables[idx];
                     interactable.is_grabbed = true;
+                    interactable.is_physics_active = false;
+                    interactable.velocity = Vec3::ZERO;
+
                     self.player.grabbed_object = Some(GrabbedObject {
-                        position: Vec3::ZERO,
                         size: interactable.size,
                         color: interactable.color,
-                        original_position: interactable.position,
                     });
                 }
             }
         }
 
-        if self.player.grabbed_object.is_some() {
-            let eye_pos = self.player.get_eye_position();
-            let forward = self.player.transform.forward();
-            let right = self.player.transform.right();
-            let up = Vec3::Y;
-            let grabbed = self.player.grabbed_object.as_mut().unwrap();
-            grabbed.position = eye_pos + forward * 1.5 + right * 0.5 - up * 0.3;
+        let gravity = -20.0;
+        let ground_y = 0.0;
+        let platforms_data: Vec<(crate::common::Transform, crate::common::Collider)> = 
+            self.world.platforms.iter().map(|p| (p.transform, p.collider)).collect();
+
+        for interactable in self.world.interactables.iter_mut() {
+            if !interactable.is_physics_active || interactable.is_grabbed {
+                continue;
+            }
+
+            interactable.velocity.y += gravity * dt;
+            interactable.position.y += interactable.velocity.y * dt;
+            
+            let collider = interactable.get_collider();
+            let transform = crate::common::Transform::new(interactable.position);
+            let mut collided = false;
+            
+            for (platform_transform, platform_collider) in &platforms_data {
+                if let Some(penetration) = self.collision_system.check_collision_direct(
+                    &transform, &collider,
+                    platform_transform, platform_collider,
+                ) {
+                    if penetration.y.abs() > 0.001 {
+                        interactable.position.y += penetration.y;
+                        if interactable.velocity.y < 0.0 && penetration.y > 0.0 {
+                            interactable.velocity.y = 0.0;
+                            collided = true;
+                        } else if interactable.velocity.y > 0.0 && penetration.y < 0.0 {
+                            interactable.velocity.y = 0.0;
+                        }
+                    }
+                }
+            }
+            
+            let half_height = interactable.size.y * 0.5;
+            if interactable.position.y <= ground_y + half_height {
+                interactable.position.y = ground_y + half_height;
+                interactable.velocity.y = 0.0;
+                collided = true;
+            }
+            
+            interactable.position.x += interactable.velocity.x * dt;
+            interactable.position.z += interactable.velocity.z * dt;
+            
+            let transform = crate::common::Transform::new(interactable.position);
+            for (platform_transform, platform_collider) in &platforms_data {
+                if let Some(penetration) = self.collision_system.check_collision_direct(
+                    &transform, &collider,
+                    platform_transform, platform_collider,
+                ) {
+                    interactable.position.x += penetration.x;
+                    interactable.position.z += penetration.z;
+                    if penetration.x.abs() > 0.001 {
+                        interactable.velocity.x = 0.0;
+                    }
+                    if penetration.z.abs() > 0.001 {
+                        interactable.velocity.z = 0.0;
+                    }
+                }
+            }
+
+            if collided {
+                interactable.velocity.x *= 0.8;
+                interactable.velocity.z *= 0.8;
+                
+                if interactable.velocity.length() < 0.1 {
+                    interactable.velocity = Vec3::ZERO;
+                    interactable.is_physics_active = false;
+                }
+            }
         }
 
-        self.movement_system.update(&mut self.player.transform, &self.input, delta_time);
+        self.movement_system.update(&mut self.player.transform, &self.input, dt);
 
         self.movement_system.is_grounded = self.collision_system.check_grounded(
             &self.player.transform,
@@ -124,6 +195,7 @@ impl Game {
         clear_background(self.world.get_background_color());
 
         let camera_transform = self.player.get_camera_transform();
+        
         set_camera(&Camera3D {
             position: camera_transform.position,
             up: Vec3::Y,

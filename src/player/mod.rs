@@ -7,10 +7,8 @@ use crate::common::{Transform, Collider};
 
 #[derive(Clone)]
 pub struct GrabbedObject {
-    pub position: Vec3,
     pub size: Vec3,
     pub color: Color,
-    pub original_position: Vec3,
 }
 
 pub struct Player {

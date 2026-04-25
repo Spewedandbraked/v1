@@ -71,19 +71,19 @@ pub fn render_grabbed_object(player: &Player, show_menu: bool) {
     }
     
     if let Some(grabbed) = &player.grabbed_object {
-        let camera_transform = player.get_camera_transform();
+        let forward = player.transform.forward();
+        let right = player.transform.right();
+        let up = Vec3::Y;
+        let eye_pos = player.get_eye_position();
         
-        set_camera(&Camera3D {
-            position: camera_transform.position,
-            up: Vec3::Y,
-            target: camera_transform.position + camera_transform.forward(),
-            fovy: player.camera.fov,
-            ..Default::default()
-        });
+        // Позиция предмета: справа (+right), снизу (-up), впереди (+forward)
+        let item_pos = eye_pos 
+            + forward * 1.3 
+            + right * 0.55 
+            - up * 0.4;
         
-        draw_cube(grabbed.position, grabbed.size, None, grabbed.color);
-        draw_cube_wires(grabbed.position, grabbed.size, Color::from_rgba(0, 0, 0, 100));
-        
-        set_default_camera();
+        // Рендерим той же камерой что и мир
+        draw_cube(item_pos, grabbed.size * 0.75, None, grabbed.color);
+        draw_cube_wires(item_pos, grabbed.size * 0.75, Color::from_rgba(0, 0, 0, 120));
     }
 }

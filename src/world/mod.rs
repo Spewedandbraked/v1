@@ -45,6 +45,8 @@ pub struct Interactable {
     pub size: Vec3,
     pub color: Color,
     pub is_grabbed: bool,
+    pub velocity: Vec3,
+    pub is_physics_active: bool,
 }
 
 impl Interactable {
@@ -54,22 +56,29 @@ impl Interactable {
             size,
             color,
             is_grabbed: false,
+            velocity: Vec3::ZERO,
+            is_physics_active: false,
         }
     }
 
     pub fn render(&self) {
         if !self.is_grabbed {
-            let half = self.size * 0.5;
             draw_cube(self.position, self.size, None, self.color);
             draw_cube_wires(self.position, self.size, Color::from_rgba(0, 0, 0, 100));
             
-            draw_sphere(
-                self.position + Vec3::new(0.0, half.y + 0.5, 0.0),
-                0.15,
-                None,
-                Color::from_rgba(255, 255, 255, 200),
-            );
+            if !self.is_physics_active {
+                draw_sphere(
+                    self.position + Vec3::new(0.0, self.size.y * 0.5 + 0.5, 0.0),
+                    0.15,
+                    None,
+                    Color::from_rgba(255, 255, 255, 200),
+                );
+            }
         }
+    }
+    
+    pub fn get_collider(&self) -> crate::common::Collider {
+        crate::common::Collider::aabb(self.size * 0.5)
     }
 }
 
