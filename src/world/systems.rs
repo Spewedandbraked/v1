@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use crate::components::{Transform, Collider};
+use crate::common::{Transform, Collider};
 
 pub struct CollisionSystem;
 
@@ -32,7 +32,6 @@ impl CollisionSystem {
         if collided {
             player_transform.position += correction;
         }
-
         collided
     }
 
@@ -45,74 +44,42 @@ impl CollisionSystem {
     ) -> Option<Vec3> {
         match (collider_a, collider_b) {
             (Collider::Sphere(sphere_a), Collider::Sphere(sphere_b)) => {
-                self.sphere_sphere_collision(
-                    transform_a.position,
-                    sphere_a.radius,
-                    transform_b.position,
-                    sphere_b.radius,
-                )
+                self.sphere_sphere(transform_a.position, sphere_a.radius, transform_b.position, sphere_b.radius)
             }
             (Collider::Sphere(sphere), Collider::AABB(aabb)) => {
-                self.sphere_aabb_collision(
-                    transform_a.position,
-                    sphere.radius,
-                    transform_b.position,
-                    aabb.half_extents,
-                )
+                self.sphere_aabb(transform_a.position, sphere.radius, transform_b.position, aabb.half_extents)
             }
             (Collider::AABB(aabb), Collider::Sphere(sphere)) => {
-                self.sphere_aabb_collision(
-                    transform_b.position,
-                    sphere.radius,
-                    transform_a.position,
-                    aabb.half_extents,
-                ).map(|v| -v)
+                self.sphere_aabb(transform_b.position, sphere.radius, transform_a.position, aabb.half_extents)
+                    .map(|v| -v)
             }
             _ => None,
         }
     }
 
-    fn sphere_sphere_collision(
-        &self,
-        pos_a: Vec3,
-        radius_a: f32,
-        pos_b: Vec3,
-        radius_b: f32,
-    ) -> Option<Vec3> {
+    fn sphere_sphere(&self, pos_a: Vec3, r_a: f32, pos_b: Vec3, r_b: f32) -> Option<Vec3> {
         let delta = pos_b - pos_a;
-        let distance = delta.length();
-        let min_distance = radius_a + radius_b;
-
-        if distance < min_distance && distance > 0.001 {
-            let penetration = min_distance - distance;
-            Some(-delta.normalize() * penetration)
+        let dist = delta.length();
+        let min_dist = r_a + r_b;
+        if dist < min_dist && dist > 0.001 {
+            Some(-delta.normalize() * (min_dist - dist))
         } else {
             None
         }
     }
 
-    fn sphere_aabb_collision(
-        &self,
-        sphere_pos: Vec3,
-        sphere_radius: f32,
-        aabb_pos: Vec3,
-        aabb_half_extents: Vec3,
-    ) -> Option<Vec3> {
-        let min = aabb_pos - aabb_half_extents;
-        let max = aabb_pos + aabb_half_extents;
-        
-        let closest_point = Vec3::new(
+    fn sphere_aabb(&self, sphere_pos: Vec3, radius: f32, aabb_pos: Vec3, half: Vec3) -> Option<Vec3> {
+        let min = aabb_pos - half;
+        let max = aabb_pos + half;
+        let closest = Vec3::new(
             sphere_pos.x.clamp(min.x, max.x),
             sphere_pos.y.clamp(min.y, max.y),
             sphere_pos.z.clamp(min.z, max.z),
         );
-
-        let delta = closest_point - sphere_pos;
-        let distance = delta.length();
-
-        if distance < sphere_radius && distance > 0.001 {
-            let penetration = sphere_radius - distance;
-            Some(-delta.normalize() * penetration)
+        let delta = closest - sphere_pos;
+        let dist = delta.length();
+        if dist < radius && dist > 0.001 {
+            Some(-delta.normalize() * (radius - dist))
         } else {
             None
         }
@@ -126,15 +93,14 @@ impl CollisionSystem {
     ) -> bool {
         if let Collider::Sphere(sphere) = player_collider {
             let check_pos = player_transform.position - Vec3::new(0.0, sphere.radius + 0.1, 0.0);
-            
             for (platform_transform, platform_collider) in platforms {
                 if let Collider::AABB(aabb) = platform_collider {
                     let min = platform_transform.position - aabb.half_extents;
                     let max = platform_transform.position + aabb.half_extents;
-                    
-                    if check_pos.x >= min.x && check_pos.x <= max.x &&
-                       check_pos.z >= min.z && check_pos.z <= max.z &&
-                       check_pos.y >= min.y - 0.1 && check_pos.y <= max.y + 0.1 {
+                    if check_pos.x >= min.x && check_pos.x <= max.x
+                        && check_pos.z >= min.z && check_pos.z <= max.z
+                        && check_pos.y >= min.y - 0.1 && check_pos.y <= max.y + 0.1
+                    {
                         return true;
                     }
                 }

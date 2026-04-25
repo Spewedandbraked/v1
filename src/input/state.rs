@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use crate::input::input_config::{Action, InputConfig};
+use crate::input::config::{Action, InputConfig};
 
 #[derive(Debug, Default)]
 pub struct InputState {
@@ -34,10 +34,6 @@ impl InputState {
         self.jump = config.is_action_just_pressed(Action::Jump);
 
         self.mouse_delta = mouse_delta_position();
-
-        if is_key_pressed(KeyCode::Escape) {
-            self.cursor_captured = !self.cursor_captured;
-        }
 
         set_cursor_grab(self.cursor_captured);
         show_mouse(!self.cursor_captured);
