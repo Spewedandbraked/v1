@@ -22,6 +22,10 @@ pub struct Player {
     pub grabbed_left: Option<GrabbedObject>,
     pub grabbed_right: Option<GrabbedObject>,
     pub stats: stats::PlayerStats,
+    pub left_charge: f32,
+    pub right_charge: f32,
+    pub is_charging_left: bool,
+    pub is_charging_right: bool,
 }
 
 impl Default for Player {
@@ -37,6 +41,10 @@ impl Default for Player {
             grabbed_left: None,
             grabbed_right: None,
             stats: stats::PlayerStats::new(),
+            left_charge: 0.0,
+            right_charge: 0.0,
+            is_charging_left: false,
+            is_charging_right: false,
         }
     }
 }

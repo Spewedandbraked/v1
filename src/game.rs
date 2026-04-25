@@ -71,21 +71,40 @@ impl Game {
             self.movement_system.jump();
         }
 
-        // ЛКМ — левая рука
-        if is_mouse_button_pressed(MouseButton::Left) {
-            self.handle_interact(true);
+        // Зарядка левой руки (ЛКМ)
+        if is_mouse_button_down(MouseButton::Left) && self.player.grabbed_left.is_some() {
+            self.player.is_charging_left = true;
+            self.player.left_charge = (self.player.left_charge + dt * 2.0).min(1.0);
+        }
+        if is_mouse_button_released(MouseButton::Left) {
+            if self.player.is_charging_left {
+                let charge = self.player.left_charge;
+                self.throw_object(true, charge);
+                self.player.left_charge = 0.0;
+                self.player.is_charging_left = false;
+            } else if self.player.grabbed_left.is_none() {
+                self.handle_interact(true);
+            }
         }
         
-        // ПКМ — правая рука
-        if is_mouse_button_pressed(MouseButton::Right) {
-            self.handle_interact(false);
+        // Зарядка правой руки (ПКМ)
+        if is_mouse_button_down(MouseButton::Right) && self.player.grabbed_right.is_some() {
+            self.player.is_charging_right = true;
+            self.player.right_charge = (self.player.right_charge + dt * 2.0).min(1.0);
+        }
+        if is_mouse_button_released(MouseButton::Right) {
+            if self.player.is_charging_right {
+                let charge = self.player.right_charge;
+                self.throw_object(false, charge);
+                self.player.right_charge = 0.0;
+                self.player.is_charging_right = false;
+            } else if self.player.grabbed_right.is_none() {
+                self.handle_interact(false);
+            }
         }
 
-        // Проверяем, может ли игрок спринтовать
         let wants_to_sprint = self.input.sprint;
         let can_sprint = wants_to_sprint && self.player.stats.can_sprint();
-        
-        // Обновляем статы (тратим выносливость всегда когда зажат shift, даже если стамина кончилась)
         self.player.stats.update(wants_to_sprint, dt);
 
         let is_moving = self.input.move_forward || self.input.move_backward 
@@ -95,7 +114,6 @@ impl Game {
             &mut self.player.camera, is_moving, is_sprinting, dt,
         );
 
-        // Если стамина кончилась — принудительно выключаем спринт
         if !can_sprint {
             self.input.sprint = false;
         }
@@ -186,61 +204,70 @@ impl Game {
         self.camera_system.update(&mut self.player.transform, &mut self.player.camera, &self.input);
     }
 
-    fn handle_interact(&mut self, is_left: bool) {
-        let grabbed = if is_left { &self.player.grabbed_left } else { &self.player.grabbed_right };
+    fn throw_object(&mut self, is_left: bool, charge: f32) {
+        let min_force = 5.0;
+        let max_force = 25.0;
+        let throw_force = min_force + (max_force - min_force) * charge;
+        let forward = self.player.transform.forward();
+        let eye_pos = self.player.get_eye_position();
         
+        let grabbed = if is_left { &self.player.grabbed_left } else { &self.player.grabbed_right };
         if let Some(obj) = grabbed {
-            let throw_force = 12.0;
-            let forward = self.player.transform.forward();
-            let eye_pos = self.player.get_eye_position();
             let idx = obj.world_index;
-            
             if idx < self.world.interactables.len() {
                 let interactable = &mut self.world.interactables[idx];
                 interactable.position = eye_pos + forward * 1.5;
-                interactable.velocity = forward * throw_force + Vec3::new(0.0, 3.0, 0.0);
+                interactable.velocity = forward * throw_force + Vec3::new(0.0, 3.0 * charge, 0.0);
                 interactable.is_physics_active = true;
                 interactable.is_grabbed = false;
             }
+        }
+        
+        if is_left {
+            self.player.grabbed_left = None;
+        } else {
+            self.player.grabbed_right = None;
+        }
+    }
+
+    fn handle_interact(&mut self, is_left: bool) {
+        let grabbed = if is_left { &self.player.grabbed_left } else { &self.player.grabbed_right };
+        
+        if grabbed.is_some() {
+            return;
+        }
+        
+        let eye_pos = self.player.get_eye_position();
+        let forward = self.player.transform.forward();
+
+        if let Some((idx, _)) = self.collision_system.raycast_interactable(
+            eye_pos,
+            forward,
+            5.0,
+            &self.world.interactables,
+        ) {
+            let already_grabbed = self.player.grabbed_left.as_ref().map(|g| g.world_index == idx).unwrap_or(false)
+                || self.player.grabbed_right.as_ref().map(|g| g.world_index == idx).unwrap_or(false);
+            
+            if already_grabbed {
+                return;
+            }
+            
+            let interactable = &mut self.world.interactables[idx];
+            interactable.is_grabbed = true;
+            interactable.is_physics_active = false;
+            interactable.velocity = Vec3::ZERO;
+
+            let obj = GrabbedObject {
+                size: interactable.size,
+                color: interactable.color,
+                world_index: idx,
+            };
             
             if is_left {
-                self.player.grabbed_left = None;
+                self.player.grabbed_left = Some(obj);
             } else {
-                self.player.grabbed_right = None;
-            }
-        } else {
-            let eye_pos = self.player.get_eye_position();
-            let forward = self.player.transform.forward();
-
-            if let Some((idx, _)) = self.collision_system.raycast_interactable(
-                eye_pos,
-                forward,
-                5.0,
-                &self.world.interactables,
-            ) {
-                let already_grabbed = self.player.grabbed_left.as_ref().map(|g| g.world_index == idx).unwrap_or(false)
-                    || self.player.grabbed_right.as_ref().map(|g| g.world_index == idx).unwrap_or(false);
-                
-                if already_grabbed {
-                    return;
-                }
-                
-                let interactable = &mut self.world.interactables[idx];
-                interactable.is_grabbed = true;
-                interactable.is_physics_active = false;
-                interactable.velocity = Vec3::ZERO;
-
-                let obj = GrabbedObject {
-                    size: interactable.size,
-                    color: interactable.color,
-                    world_index: idx,
-                };
-                
-                if is_left {
-                    self.player.grabbed_left = Some(obj);
-                } else {
-                    self.player.grabbed_right = Some(obj);
-                }
+                self.player.grabbed_right = Some(obj);
             }
         }
     }
@@ -272,14 +299,40 @@ impl Game {
             ..Default::default()
         });
         
+        // Левая рука с дёрганым дрожанием
         if let Some(ref grabbed) = self.player.grabbed_left {
-            let pos = Vec3::new(0.55, -0.45, 0.6);
+            let charge = self.player.left_charge;
+            let shake = if self.player.is_charging_left {
+                let intensity = charge * 0.02;
+                let t = (get_time() as f32 * 20.0) as i32 as f32;
+                Vec3::new(
+                    (t * 1.7).sin().signum() * intensity,
+                    (t * 2.3).sin().signum() * intensity,
+                    (t * 1.9).sin().signum() * intensity * 0.5,
+                )
+            } else {
+                Vec3::ZERO
+            };
+            let pos = Vec3::new(0.55, -0.45, 0.6) + shake;
             draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
             draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
         }
         
+        // Правая рука с дёрганым дрожанием
         if let Some(ref grabbed) = self.player.grabbed_right {
-            let pos = Vec3::new(-0.55, -0.45, 0.6);
+            let charge = self.player.right_charge;
+            let shake = if self.player.is_charging_right {
+                let intensity = charge * 0.02;
+                let t = (get_time() as f32 * 20.0) as i32 as f32;
+                Vec3::new(
+                    (t * 1.9 + 1.0).sin().signum() * intensity,
+                    (t * 2.1 + 1.0).sin().signum() * intensity,
+                    (t * 1.5 + 1.0).sin().signum() * intensity * 0.5,
+                )
+            } else {
+                Vec3::ZERO
+            };
+            let pos = Vec3::new(-0.55, -0.45, 0.6) + shake;
             draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
             draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
         }
