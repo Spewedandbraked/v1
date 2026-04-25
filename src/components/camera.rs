@@ -11,7 +11,6 @@ pub struct CameraComponent {
 }
 
 impl Default for CameraComponent {
-    /// Инициализирует стандартные параметры обзора и инверсию осей камеры.
     fn default() -> Self {
         Self {
             fov: 90.0_f32.to_radians(),
@@ -25,7 +24,6 @@ impl Default for CameraComponent {
 }
 
 impl CameraComponent {
-    /// Ограничивает вертикальный угол взгляда, чтобы избежать переворота камеры.
     pub fn clamp_pitch(&mut self) {
         let limit = 89.0_f32.to_radians();
         self.pitch = self.pitch.clamp(-limit, limit);

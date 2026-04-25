@@ -6,7 +6,6 @@ pub struct AABBCollider {
 }
 
 impl AABBCollider {
-    /// Создаёт AABB-коллайдер с полуразмерами по осям.
     pub fn new(half_extents: Vec3) -> Self {
         Self { half_extents }
     }
@@ -18,7 +17,6 @@ pub struct SphereCollider {
 }
 
 impl SphereCollider {
-    /// Создаёт сферический коллайдер с указанным радиусом.
     pub fn new(radius: f32) -> Self {
         Self { radius }
     }
@@ -31,12 +29,10 @@ pub enum Collider {
 }
 
 impl Collider {
-    /// Удобный конструктор enum-коллайдера типа AABB.
     pub fn aabb(half_extents: Vec3) -> Self {
         Collider::AABB(AABBCollider::new(half_extents))
     }
 
-    /// Удобный конструктор enum-коллайдера типа Sphere.
     pub fn sphere(radius: f32) -> Self {
         Collider::Sphere(SphereCollider::new(radius))
     }

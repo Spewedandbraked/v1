@@ -12,7 +12,6 @@ pub struct MovementSystem {
 }
 
 impl Default for MovementSystem {
-    /// Возвращает базовые физические параметры и нулевую скорость движения.
     fn default() -> Self {
         Self {
             walk_speed: 5.0,
@@ -26,12 +25,10 @@ impl Default for MovementSystem {
 }
 
 impl MovementSystem {
-    /// Создаёт систему движения с параметрами по умолчанию.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Применяет ввод, гравитацию и перемещает игрока за текущий кадр.
     pub fn update(
         &mut self,
         transform: &mut Transform,
@@ -127,7 +124,6 @@ impl MovementSystem {
         }
     }
 
-    /// Запускает прыжок, если персонаж находится на земле.
     pub fn jump(&mut self) {
         if self.is_grounded {
             self.velocity.y = self.jump_force;

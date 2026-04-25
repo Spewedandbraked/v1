@@ -16,7 +16,6 @@ pub struct GameUI {
 }
 
 impl GameUI {
-    /// Создаёт UI с выключенными меню, ребиндом и дебаг-режимом.
     pub fn new() -> Self {
         Self {
             show_menu: false,
@@ -25,7 +24,6 @@ impl GameUI {
         }
     }
 
-    /// Переключает экран меню и синхронизирует состояние курсора.
     pub fn toggle_menu(&mut self, input: &mut InputState) {
         self.show_menu = !self.show_menu;
         if self.show_menu {
@@ -40,12 +38,10 @@ impl GameUI {
         }
     }
 
-    /// Включает или выключает показ отладочной информации.
     pub fn toggle_debug(&mut self) {
         self.show_debug = !self.show_debug;
     }
 
-    /// Ожидает нажатие клавиши для переназначения выбранного действия.
     pub fn update_rebinding(&mut self, config: &mut InputConfig) {
         if let Some(action) = self.rebinding_action {
             if let Some(key) = get_last_key_pressed() {
@@ -59,7 +55,6 @@ impl GameUI {
         }
     }
 
-    /// Обрабатывает клики по пунктам меню (ребинд и сброс биндов).
     pub fn handle_menu_click(&mut self, config: &mut InputConfig) {
         if !self.show_menu || self.rebinding_action.is_some() {
             return;
@@ -103,12 +98,10 @@ impl GameUI {
         }
     }
 
-    /// Возвращает признак того, что UI находится в режиме ребинда.
     pub fn is_rebinding(&self) -> bool {
         self.rebinding_action.is_some()
     }
 
-    /// Рисует отладочный оверлей с FPS, позицией и скоростью игрока.
     pub fn render_debug_info(
         &self,
         player: &Player,
@@ -147,7 +140,6 @@ impl GameUI {
         draw_text(&grounded_text, 10.0, y, FONT_SIZE_DEBUG, colors::WHITE);
     }
 
-    /// Отрисовывает прицел в центре экрана, когда меню закрыто.
     pub fn render_crosshair(&self) {
         if self.show_menu {
             return;
@@ -178,7 +170,6 @@ impl GameUI {
         draw_circle(screen_center.x, screen_center.y, 2.0, colors::WHITE);
     }
 
-    /// Рисует экран меню управления и подсказки по переназначению клавиш.
     pub fn render_menu(&self, player: &Player, config: &InputConfig) {
         let center = Vec2::new(screen_width() * 0.5, screen_height() * 0.5);
 

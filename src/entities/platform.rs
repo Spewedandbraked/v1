@@ -10,7 +10,6 @@ pub struct Platform {
 }
 
 impl Platform {
-    /// Создаёт платформу с заданной позицией, размером и цветом.
     pub fn new(position: Vec3, size: Vec3, color: Color) -> Self {
         Self {
             transform: Transform::new(position),
@@ -19,7 +18,6 @@ impl Platform {
         }
     }
 
-    /// Отрисовывает платформу как заполненный куб с контуром.
     pub fn render(&self) {
         let half = match &self.collider {
             Collider::AABB(aabb) => aabb.half_extents,

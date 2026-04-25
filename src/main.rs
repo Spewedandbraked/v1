@@ -8,7 +8,6 @@ mod systems;
 use game::Game;
 use macroquad::prelude::*;
 
-/// Настраивает параметры окна и платформенные опции Macroquad.
 fn window_conf() -> Conf {
     Conf {
         window_title: "Rust FPS".to_string(),
@@ -25,7 +24,6 @@ fn window_conf() -> Conf {
 }
 
 #[macroquad::main(window_conf)]
-/// Точка входа: инициализирует игру и запускает бесконечный игровой цикл.
 async fn main() {
     let mut game = Game::new();
     
