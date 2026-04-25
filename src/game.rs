@@ -103,6 +103,12 @@ impl Game {
             }
         }
 
+        // Обновление врагов
+        let player_pos = self.player.transform.position;
+        for enemy in self.world.enemies.iter_mut() {
+            enemy.update(player_pos, dt);
+        }
+
         let wants_to_sprint = self.input.sprint;
         let can_sprint = wants_to_sprint && self.player.stats.can_sprint();
         self.player.stats.update(wants_to_sprint, dt);
@@ -186,6 +192,17 @@ impl Game {
                 if interactable.velocity.length() < 0.1 {
                     interactable.velocity = Vec3::ZERO;
                     interactable.is_physics_active = false;
+                }
+            }
+
+            // Проверка попадания по врагам
+            if interactable.velocity.length() > 3.0 {
+                let pos = interactable.position;
+                let spd = interactable.velocity.length();
+                for enemy in self.world.enemies.iter_mut() {
+                    if enemy.alive && (pos - enemy.transform.position).length() < 1.5 {
+                        enemy.take_damage(spd * 2.0);
+                    }
                 }
             }
         }
@@ -299,7 +316,6 @@ impl Game {
             ..Default::default()
         });
         
-        // Левая рука с дёрганым дрожанием
         if let Some(ref grabbed) = self.player.grabbed_left {
             let charge = self.player.left_charge;
             let shake = if self.player.is_charging_left {
@@ -318,7 +334,6 @@ impl Game {
             draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
         }
         
-        // Правая рука с дёрганым дрожанием
         if let Some(ref grabbed) = self.player.grabbed_right {
             let charge = self.player.right_charge;
             let shake = if self.player.is_charging_right {

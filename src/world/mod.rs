@@ -1,6 +1,7 @@
 use macroquad::color::colors;
 use macroquad::prelude::*;
 pub mod systems;
+use crate::enemy::Enemy;
 
 #[derive(Debug, Clone)]
 pub struct Platform {
@@ -86,6 +87,7 @@ pub struct World {
     pub platforms: Vec<Platform>,
     decorations: Vec<Decoration>,
     pub interactables: Vec<Interactable>,
+    pub enemies: Vec<Enemy>,
     pub grid_visible: bool,
     time: f32,
 }
@@ -96,6 +98,7 @@ impl World {
             platforms: Self::create_platforms(),
             decorations: Self::create_decorations(),
             interactables: Self::create_interactables(),
+            enemies: Self::create_enemies(),
             grid_visible: true,
             time: 0.0,
         }
@@ -153,6 +156,14 @@ impl World {
                 Vec3::new(3.0, 0.5, 3.0),
                 Color::from_rgba(255, 100, 255, 255),
             ),
+        ]
+    }
+
+    fn create_enemies() -> Vec<Enemy> {
+        vec![
+            Enemy::new(Vec3::new(8.0, 1.0, 8.0)),
+            Enemy::new(Vec3::new(-8.0, 1.0, -5.0)),
+            Enemy::new(Vec3::new(5.0, 1.0, -8.0)),
         ]
     }
 
@@ -223,6 +234,9 @@ impl World {
         }
         for interactable in &self.interactables {
             interactable.render();
+        }
+        for enemy in &self.enemies {
+            enemy.render();
         }
     }
 

@@ -39,12 +39,12 @@ impl PlayerStats {
         self.stamina > 0.0
     }
 
-    // // pub fn take_damage(&mut self, amount: f32) {
-    // //     self.health -= amount;
-    // //     self.health = self.health.max(0.0);
-    // // }
+    pub fn take_damage(&mut self, amount: f32) {
+        self.health -= amount;
+        self.health = self.health.max(0.0);
+    }
 
-    // pub fn is_dead(&self) -> bool {
-    //     self.health <= 0.0
-    // }
+    pub fn is_dead(&self) -> bool {
+        self.health <= 0.0
+    }
 }
