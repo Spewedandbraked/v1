@@ -1,5 +1,5 @@
-use macroquad::prelude::*;
 use macroquad::color::colors;
+use macroquad::prelude::*;
 pub mod systems;
 
 #[derive(Debug, Clone)]
@@ -58,25 +58,89 @@ impl World {
 
     fn create_platforms() -> Vec<Platform> {
         vec![
-            Platform::new(Vec3::new(0.0, -0.5, 0.0), Vec3::new(20.0, 1.0, 20.0), Color::from_rgba(60, 60, 80, 255)),
-            Platform::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(8.0, 0.5, 8.0), Color::from_rgba(80, 80, 100, 255)),
-            Platform::new(Vec3::new(3.0, 1.0, 4.0), Vec3::new(2.0, 0.5, 2.0), Color::from_rgba(255, 150, 100, 255)),
-            Platform::new(Vec3::new(4.0, 2.0, 5.0), Vec3::new(2.0, 0.5, 2.0), Color::from_rgba(255, 150, 100, 255)),
-            Platform::new(Vec3::new(5.0, 3.0, 6.0), Vec3::new(2.0, 0.5, 2.0), Color::from_rgba(255, 150, 100, 255)),
-            Platform::new(Vec3::new(-4.0, 1.5, -3.0), Vec3::new(1.0, 3.0, 1.0), Color::from_rgba(150, 100, 255, 255)),
-            Platform::new(Vec3::new(4.0, 1.5, -3.0), Vec3::new(1.0, 3.0, 1.0), Color::from_rgba(150, 100, 255, 255)),
-            Platform::new(Vec3::new(0.0, 3.0, -3.0), Vec3::new(5.0, 0.5, 1.5), Color::from_rgba(100, 255, 150, 255)),
-            Platform::new(Vec3::new(-5.0, 2.0, 5.0), Vec3::new(2.0, 4.0, 2.0), Color::from_rgba(255, 100, 255, 255)),
-            Platform::new(Vec3::new(-5.0, 5.0, 5.0), Vec3::new(3.0, 0.5, 3.0), Color::from_rgba(255, 100, 255, 255)),
+            Platform::new(
+                Vec3::new(0.0, -0.5, 0.0),
+                Vec3::new(20.0, 1.0, 20.0),
+                Color::from_rgba(60, 60, 80, 255),
+            ),
+            Platform::new(
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(8.0, 0.5, 8.0),
+                Color::from_rgba(80, 80, 100, 255),
+            ),
+            Platform::new(
+                Vec3::new(3.0, 1.0, 4.0),
+                Vec3::new(2.0, 0.5, 2.0),
+                Color::from_rgba(255, 150, 100, 255),
+            ),
+            Platform::new(
+                Vec3::new(4.0, 2.0, 5.0),
+                Vec3::new(2.0, 0.5, 2.0),
+                Color::from_rgba(255, 150, 100, 255),
+            ),
+            Platform::new(
+                Vec3::new(5.0, 3.0, 6.0),
+                Vec3::new(2.0, 0.5, 2.0),
+                Color::from_rgba(255, 150, 100, 255),
+            ),
+            Platform::new(
+                Vec3::new(-4.0, 1.5, -3.0),
+                Vec3::new(1.0, 3.0, 1.0),
+                Color::from_rgba(150, 100, 255, 255),
+            ),
+            Platform::new(
+                Vec3::new(4.0, 1.5, -3.0),
+                Vec3::new(1.0, 3.0, 1.0),
+                Color::from_rgba(150, 100, 255, 255),
+            ),
+            Platform::new(
+                Vec3::new(0.0, 3.0, -3.0),
+                Vec3::new(5.0, 0.5, 1.5),
+                Color::from_rgba(100, 255, 150, 255),
+            ),
+            Platform::new(
+                Vec3::new(-5.0, 2.0, 5.0),
+                Vec3::new(2.0, 4.0, 2.0),
+                Color::from_rgba(255, 100, 255, 255),
+            ),
+            Platform::new(
+                Vec3::new(-5.0, 5.0, 5.0),
+                Vec3::new(3.0, 0.5, 3.0),
+                Color::from_rgba(255, 100, 255, 255),
+            ),
         ]
     }
 
     fn create_decorations() -> Vec<Decoration> {
         vec![
-            Decoration { position: Vec3::new(8.0, 5.0, 8.0), decoration_type: DecorationType::FloatingSphere { radius: 0.3, color_offset: 0.0 } },
-            Decoration { position: Vec3::new(-8.0, 4.0, 6.0), decoration_type: DecorationType::FloatingSphere { radius: 0.3, color_offset: 1.0 } },
-            Decoration { position: Vec3::new(6.0, 6.0, -8.0), decoration_type: DecorationType::FloatingSphere { radius: 0.3, color_offset: 2.0 } },
-            Decoration { position: Vec3::new(-6.0, 7.0, -6.0), decoration_type: DecorationType::FloatingSphere { radius: 0.3, color_offset: 3.0 } },
+            Decoration {
+                position: Vec3::new(8.0, 5.0, 8.0),
+                decoration_type: DecorationType::FloatingSphere {
+                    radius: 0.3,
+                    color_offset: 0.0,
+                },
+            },
+            Decoration {
+                position: Vec3::new(-8.0, 4.0, 6.0),
+                decoration_type: DecorationType::FloatingSphere {
+                    radius: 0.3,
+                    color_offset: 1.0,
+                },
+            },
+            Decoration {
+                position: Vec3::new(6.0, 6.0, -8.0),
+                decoration_type: DecorationType::FloatingSphere {
+                    radius: 0.3,
+                    color_offset: 2.0,
+                },
+            },
+            Decoration {
+                position: Vec3::new(-6.0, 7.0, -6.0),
+                decoration_type: DecorationType::FloatingSphere {
+                    radius: 0.3,
+                    color_offset: 3.0,
+                },
+            },
         ]
     }
 
@@ -114,16 +178,18 @@ impl World {
 
     fn render_decorations(&self) {
         for (i, decoration) in self.decorations.iter().enumerate() {
-            if let DecorationType::FloatingSphere { radius, color_offset } = decoration.decoration_type {
-                let offset = (self.time + i as f32) * 0.5 + color_offset;
-                let color = Color::from_rgba(
-                    (128 + (offset.sin() * 64.0) as u8),
-                    (128 + (offset.cos() * 64.0) as u8),
-                    200,
-                    150,
-                );
-                draw_sphere(decoration.position, radius, None, color);
-            }
+            let DecorationType::FloatingSphere {
+                radius,
+                color_offset,
+            } = decoration.decoration_type;
+            let offset = (self.time + i as f32) * 0.5 + color_offset;
+            let color = Color::from_rgba(
+                128 + (offset.sin() * 64.0) as u8,
+                128 + (offset.cos() * 64.0) as u8,
+                200,
+                150,
+            );
+            draw_sphere(decoration.position, radius, None, color);
         }
         for i in 0..5 {
             let angle = (self.time * 0.2 + i as f32 * 1.2) % (std::f32::consts::PI * 2.0);

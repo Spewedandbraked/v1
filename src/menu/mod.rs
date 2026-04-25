@@ -156,7 +156,6 @@ impl GameUI {
         }
 
         if self.slider_dragging {
-            let slider_y = center.y;
             let slider_width = 300.0;
             let slider_x = center.x - slider_width * 0.5;
             let mouse_x = mouse_pos.0.clamp(slider_x, slider_x + slider_width);
@@ -252,7 +251,6 @@ impl GameUI {
                 draw_text(sens_label, center.x - sens_label_size.width * 0.5, center.y - 40.0, FONT_SIZE_CONTROL, colors::WHITE);
 
                 let value_text = format!("{:.2}", sensitivity);
-                let value_size = measure_text(&value_text, None, FONT_SIZE_CONTROL as u16, 1.0);
                 draw_text(&value_text, slider_x + slider_width + 20.0, slider_y + 8.0, FONT_SIZE_CONTROL, colors::WHITE);
             }
             MenuSection::Audio => {
