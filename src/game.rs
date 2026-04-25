@@ -81,15 +81,25 @@ impl Game {
             self.handle_interact(false);
         }
 
-        // Вычисляем bob до движения
+        // Проверяем, может ли игрок спринтовать
+        let wants_to_sprint = self.input.sprint;
+        let can_sprint = wants_to_sprint && self.player.stats.can_sprint();
+        
+        // Обновляем статы (тратим выносливость всегда когда зажат shift, даже если стамина кончилась)
+        self.player.stats.update(wants_to_sprint, dt);
+
         let is_moving = self.input.move_forward || self.input.move_backward 
             || self.input.move_left || self.input.move_right;
-        let is_sprinting = self.input.sprint;
+        let is_sprinting = is_moving && can_sprint;
         self.bob_offset = self.camera_system.calculate_bob_offset(
             &mut self.player.camera, is_moving, is_sprinting, dt,
         );
 
-        // Физика кубов
+        // Если стамина кончилась — принудительно выключаем спринт
+        if !can_sprint {
+            self.input.sprint = false;
+        }
+
         let gravity = -20.0;
         let ground_y = 0.0;
         let platforms_data: Vec<(crate::common::Transform, crate::common::Collider)> = 
@@ -242,7 +252,6 @@ impl Game {
         let eye_pos = camera_transform.position + self.bob_offset;
         let forward = camera_transform.forward();
         
-        // Основной рендер мира
         set_camera(&Camera3D {
             position: eye_pos,
             up: Vec3::Y,
@@ -254,7 +263,6 @@ impl Game {
         self.world.render();
         set_default_camera();
         
-        // Рендер рук — отдельная камера
         let hand_camera_pos = Vec3::new(0.0, 0.0, -2.0);
         set_camera(&Camera3D {
             position: hand_camera_pos,
@@ -264,14 +272,12 @@ impl Game {
             ..Default::default()
         });
         
-        // Левая рука (ЛКМ)
         if let Some(ref grabbed) = self.player.grabbed_left {
             let pos = Vec3::new(0.55, -0.45, 0.6);
             draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
             draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
         }
         
-        // Правая рука (ПКМ)
         if let Some(ref grabbed) = self.player.grabbed_right {
             let pos = Vec3::new(-0.55, -0.45, 0.6);
             draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
@@ -280,6 +286,7 @@ impl Game {
         
         set_default_camera();
 
+        crate::player::ui::render_hud(&self.player, self.ui.show_menu);
         crate::player::ui::render_debug_info(&self.player, &self.movement_system, self.ui.show_debug);
         crate::player::ui::render_crosshair(self.ui.show_menu);
 

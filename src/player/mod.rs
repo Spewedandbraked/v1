@@ -1,6 +1,7 @@
 pub mod camera;
 pub mod movement;
 pub mod ui;
+pub mod stats;
 
 use macroquad::prelude::*;
 use crate::common::{Transform, Collider};
@@ -20,6 +21,7 @@ pub struct Player {
     pub eye_height: f32,
     pub grabbed_left: Option<GrabbedObject>,
     pub grabbed_right: Option<GrabbedObject>,
+    pub stats: stats::PlayerStats,
 }
 
 impl Default for Player {
@@ -34,6 +36,7 @@ impl Default for Player {
             eye_height,
             grabbed_left: None,
             grabbed_right: None,
+            stats: stats::PlayerStats::new(),
         }
     }
 }
