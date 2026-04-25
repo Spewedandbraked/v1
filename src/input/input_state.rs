@@ -35,10 +35,6 @@ impl InputState {
 
         self.mouse_delta = mouse_delta_position();
 
-        if is_key_pressed(KeyCode::Escape) {
-            self.cursor_captured = !self.cursor_captured;
-        }
-
         set_cursor_grab(self.cursor_captured);
         show_mouse(!self.cursor_captured);
     }
