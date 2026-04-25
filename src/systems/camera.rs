@@ -5,10 +5,12 @@ use crate::input::InputState;
 pub struct CameraSystem;
 
 impl CameraSystem {
+    /// Создаёт систему управления камерой.
     pub fn new() -> Self {
         Self
     }
 
+    /// Обновляет поворот камеры по смещению мыши и применяет его к трансформу.
     pub fn update(
         &self,
         transform: &mut Transform,

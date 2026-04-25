@@ -20,6 +20,7 @@ pub enum Action {
 }
 
 impl Action {
+    /// Возвращает клавишу по умолчанию для конкретного действия.
     pub fn default_key(self) -> KeyCode {
         match self {
             Action::ToggleMenu => KeyCode::Tab,
@@ -37,6 +38,7 @@ impl Action {
         }
     }
 
+    /// Возвращает человекочитаемое название действия для UI.
     pub fn display_name(self) -> &'static str {
         match self {
             Action::ToggleMenu => "Toggle Menu",
@@ -54,6 +56,7 @@ impl Action {
         }
     }
 
+    /// Возвращает полный список доступных игровых действий.
     pub fn all() -> &'static [Action] {
         &[
             Action::ToggleMenu,
@@ -79,10 +82,12 @@ pub struct SerdeKeyCode {
 }
 
 impl SerdeKeyCode {
+    /// Упаковывает `KeyCode` в сериализуемое представление.
     pub fn from_keycode(key: KeyCode) -> Self {
         Self { code: key as u16 }
     }
 
+    /// Восстанавливает `KeyCode` из сериализуемого представления.
     pub fn to_keycode(self) -> KeyCode {
         unsafe { std::mem::transmute::<u16, KeyCode>(self.code) }
     }
@@ -94,6 +99,7 @@ pub struct InputConfig {
 }
 
 impl Default for InputConfig {
+    /// Создаёт конфигурацию биндов, где все действия привязаны к клавишам по умолчанию.
     fn default() -> Self {
         let mut bindings = HashMap::new();
         for action in Action::all() {
@@ -104,6 +110,7 @@ impl Default for InputConfig {
 }
 
 impl InputConfig {
+    /// Загружает конфиг биндов из файла или создаёт дефолтный.
     pub fn load() -> Self {
         let path = "input_config.json";
         if std::path::Path::new(path).exists() {
@@ -116,6 +123,7 @@ impl InputConfig {
         }
     }
 
+    /// Сохраняет текущую раскладку действий в JSON-файл.
     pub fn save(&self) {
         let path = "input_config.json";
         if let Ok(json) = serde_json::to_string_pretty(self) {
@@ -123,6 +131,7 @@ impl InputConfig {
         }
     }
 
+    /// Возвращает назначенную клавишу для действия с fallback на дефолт.
     pub fn get_key(&self, action: Action) -> KeyCode {
         self.bindings
             .get(&action)
@@ -130,11 +139,13 @@ impl InputConfig {
             .unwrap_or_else(|| action.default_key())
     }
 
+    /// Назначает новую клавишу действию и сразу сохраняет изменения.
     pub fn set_key(&mut self, action: Action, key: KeyCode) {
         self.bindings.insert(action, SerdeKeyCode::from_keycode(key));
         self.save();
     }
 
+    /// Сбрасывает все назначения клавиш к значениям по умолчанию.
     pub fn reset_to_defaults(&mut self) {
         self.bindings.clear();
         for action in Action::all() {
@@ -143,10 +154,12 @@ impl InputConfig {
         self.save();
     }
 
+    /// Проверяет, удерживается ли клавиша, назначенная действию.
     pub fn is_action_pressed(&self, action: Action) -> bool {
         is_key_down(self.get_key(action))
     }
 
+    /// Проверяет, было ли действие нажато в текущем кадре.
     pub fn is_action_just_pressed(&self, action: Action) -> bool {
         is_key_pressed(self.get_key(action))
     }

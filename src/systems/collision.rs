@@ -4,10 +4,12 @@ use crate::components::{Transform, Collider};
 pub struct CollisionSystem;
 
 impl CollisionSystem {
+    /// Создаёт систему столкновений.
     pub fn new() -> Self {
         Self
     }
 
+    /// Находит столкновения игрока с платформами и корректирует позицию.
     pub fn resolve_collision(
         &self,
         player_transform: &mut Transform,
@@ -36,6 +38,7 @@ impl CollisionSystem {
         collided
     }
 
+    /// Определяет тип коллизии по форме коллайдеров и считает проникновение.
     fn check_collision(
         &self,
         transform_a: &Transform,
@@ -72,6 +75,7 @@ impl CollisionSystem {
         }
     }
 
+    /// Проверяет пересечение двух сфер и возвращает вектор выталкивания.
     fn sphere_sphere_collision(
         &self,
         pos_a: Vec3,
@@ -91,6 +95,7 @@ impl CollisionSystem {
         }
     }
 
+    /// Проверяет пересечение сферы и AABB и возвращает вектор коррекции.
     fn sphere_aabb_collision(
         &self,
         sphere_pos: Vec3,
@@ -118,6 +123,7 @@ impl CollisionSystem {
         }
     }
 
+    /// Проверяет, стоит ли игрок на поверхности одной из платформ.
     pub fn check_grounded(
         &self,
         player_transform: &Transform,

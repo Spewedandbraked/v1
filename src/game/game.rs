@@ -16,6 +16,7 @@ pub struct Game {
 }
 
 impl Game {
+    /// Создаёт игровой контейнер и инициализирует все подсистемы.
     pub fn new() -> Self {
         Self {
             player: Player::new(),
@@ -29,6 +30,7 @@ impl Game {
         }
     }
 
+    /// Обновляет состояние мира, UI и геймплей в рамках одного кадра.
     pub fn update(&mut self, delta_time: f32) {
         self.world.update(delta_time);
 
@@ -53,6 +55,7 @@ impl Game {
         }
     }
 
+    /// Обрабатывает игровую логику, когда меню закрыто.
     fn update_gameplay(&mut self, delta_time: f32) {
         if self.config.is_action_just_pressed(Action::ToggleGrid) {
             self.world.toggle_grid();
@@ -95,6 +98,7 @@ impl Game {
         );
     }
 
+    /// Меняет чувствительность камеры с помощью колеса мыши.
     fn handle_sensitivity_adjustment(&mut self) {
         let mouse_wheel = mouse_wheel().1;
         if mouse_wheel != 0.0 {
@@ -103,6 +107,7 @@ impl Game {
         }
     }
 
+    /// Собирает коллайдеры платформ и разрешает столкновения игрока с ними.
     fn resolve_collisions(&mut self) {
         let platforms_data: Vec<_> = self
             .world
@@ -118,6 +123,7 @@ impl Game {
         );
     }
 
+    /// Отрисовывает 3D-сцену и затем поверх неё элементы интерфейса.
     pub fn render(&self) {
         clear_background(self.world.get_background_color());
 
@@ -136,6 +142,7 @@ impl Game {
         self.render_ui();
     }
 
+    /// Рисует HUD, дебаг-информацию и меню управления.
     fn render_ui(&self) {
         self.ui
             .render_debug_info(&self.player, &self.movement_system);

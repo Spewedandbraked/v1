@@ -20,6 +20,7 @@ pub enum DecorationType {
 }
 
 impl World {
+    /// Создаёт мир: платформы, декоративные объекты и начальные флаги.
     pub fn new() -> Self {
         let platforms = Self::create_platforms();
         let decorations = Self::create_decorations();
@@ -32,6 +33,7 @@ impl World {
         }
     }
 
+    /// Формирует набор платформ, из которых состоит уровень.
     fn create_platforms() -> Vec<Platform> {
         vec![
             Platform::new(
@@ -87,6 +89,7 @@ impl World {
         ]
     }
 
+    /// Создаёт декоративные объекты для оживления сцены.
     fn create_decorations() -> Vec<Decoration> {
         vec![
             Decoration {
@@ -120,10 +123,12 @@ impl World {
         ]
     }
 
+    /// Обновляет внутреннее время мира для анимаций и эффектов.
     pub fn update(&mut self, delta_time: f32) {
         self.time += delta_time;
     }
 
+    /// Отрисовывает сетку, декорации и все платформы уровня.
     pub fn render(&self) {
         if self.grid_visible {
             self.render_grid();
@@ -136,6 +141,7 @@ impl World {
         }
     }
 
+    /// Рисует вспомогательную координатную сетку на земле.
     fn render_grid(&self) {
         let grid_size = 20;
         let spacing = 1.0;
@@ -157,6 +163,7 @@ impl World {
         }
     }
 
+    /// Отрисовывает анимированные декоративные элементы и световые линии.
     fn render_decorations(&self) {
         for (i, decoration) in self.decorations.iter().enumerate() {
             match decoration.decoration_type {
@@ -190,10 +197,12 @@ impl World {
         }
     }
 
+    /// Переключает видимость сетки мира.
     pub fn toggle_grid(&mut self) {
         self.grid_visible = !self.grid_visible;
     }
 
+    /// Возвращает динамический цвет фона в зависимости от времени.
     pub fn get_background_color(&self) -> Color {
         Color::from_rgba(
             30 + (self.time.sin() * 5.0) as u8,

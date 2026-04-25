@@ -16,6 +16,7 @@ pub struct InputState {
 }
 
 impl InputState {
+    /// Создаёт состояние ввода с захваченным курсором по умолчанию.
     pub fn new() -> Self {
         Self {
             cursor_captured: true,
@@ -23,6 +24,7 @@ impl InputState {
         }
     }
 
+    /// Считывает клавиатуру/мышь и обновляет флаги действий на кадр.
     pub fn update(&mut self, config: &InputConfig) {
         self.move_forward = config.is_action_pressed(Action::MoveForward);
         self.move_backward = config.is_action_pressed(Action::MoveBackward);
