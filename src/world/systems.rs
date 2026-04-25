@@ -113,7 +113,6 @@ impl CollisionSystem {
         let overlap_z = (max_a.z.min(max_b.z) - min_a.z.max(min_b.z)).max(0.0);
 
         if overlap_x > 0.0 && overlap_y > 0.0 && overlap_z > 0.0 {
-            // Находим ось с наименьшим перекрытием
             let center_a = pos_a;
             let center_b = pos_b;
             let delta = center_b - center_a;

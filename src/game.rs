@@ -69,42 +69,17 @@ impl Game {
             self.movement_system.jump();
         }
 
-        if self.config.is_action_just_pressed(Action::Interact) {
-            if self.player.grabbed_object.is_some() {
-                let throw_force = 12.0;
-                let forward = self.player.transform.forward();
-                let eye_pos = self.player.get_eye_position();
-                
-                if let Some(interactable) = self.world.interactables.iter_mut().find(|i| i.is_grabbed) {
-                    interactable.position = eye_pos + forward * 1.5;
-                    interactable.velocity = forward * throw_force + Vec3::new(0.0, 3.0, 0.0);
-                    interactable.is_physics_active = true;
-                    interactable.is_grabbed = false;
-                }
-                self.player.grabbed_object = None;
-            } else {
-                let eye_pos = self.player.get_eye_position();
-                let forward = self.player.transform.forward();
-
-                if let Some((idx, _)) = self.collision_system.raycast_interactable(
-                    eye_pos,
-                    forward,
-                    5.0,
-                    &self.world.interactables,
-                ) {
-                    let interactable = &mut self.world.interactables[idx];
-                    interactable.is_grabbed = true;
-                    interactable.is_physics_active = false;
-                    interactable.velocity = Vec3::ZERO;
-
-                    self.player.grabbed_object = Some(GrabbedObject {
-                        size: interactable.size,
-                        color: interactable.color,
-                    });
-                }
-            }
+        // ЛКМ — левая рука
+        if is_mouse_button_pressed(MouseButton::Left) {
+            self.handle_interact(true);
+        }
+        
+        // ПКМ — правая рука
+        if is_mouse_button_pressed(MouseButton::Right) {
+            self.handle_interact(false);
         }
 
+        // Физика кубов
         let gravity = -20.0;
         let ground_y = 0.0;
         let platforms_data: Vec<(crate::common::Transform, crate::common::Collider)> = 
@@ -191,21 +166,108 @@ impl Game {
         self.camera_system.update(&mut self.player.transform, &mut self.player.camera, &self.input);
     }
 
+    fn handle_interact(&mut self, is_left: bool) {
+        let grabbed = if is_left { &self.player.grabbed_left } else { &self.player.grabbed_right };
+        
+        if let Some(obj) = grabbed {
+            let throw_force = 12.0;
+            let forward = self.player.transform.forward();
+            let eye_pos = self.player.get_eye_position();
+            let idx = obj.world_index;
+            
+            if idx < self.world.interactables.len() {
+                let interactable = &mut self.world.interactables[idx];
+                interactable.position = eye_pos + forward * 1.5;
+                interactable.velocity = forward * throw_force + Vec3::new(0.0, 3.0, 0.0);
+                interactable.is_physics_active = true;
+                interactable.is_grabbed = false;
+            }
+            
+            if is_left {
+                self.player.grabbed_left = None;
+            } else {
+                self.player.grabbed_right = None;
+            }
+        } else {
+            let eye_pos = self.player.get_eye_position();
+            let forward = self.player.transform.forward();
+
+            if let Some((idx, _)) = self.collision_system.raycast_interactable(
+                eye_pos,
+                forward,
+                5.0,
+                &self.world.interactables,
+            ) {
+                let already_grabbed = self.player.grabbed_left.as_ref().map(|g| g.world_index == idx).unwrap_or(false)
+                    || self.player.grabbed_right.as_ref().map(|g| g.world_index == idx).unwrap_or(false);
+                
+                if already_grabbed {
+                    return;
+                }
+                
+                let interactable = &mut self.world.interactables[idx];
+                interactable.is_grabbed = true;
+                interactable.is_physics_active = false;
+                interactable.velocity = Vec3::ZERO;
+
+                let obj = GrabbedObject {
+                    size: interactable.size,
+                    color: interactable.color,
+                    world_index: idx,
+                };
+                
+                if is_left {
+                    self.player.grabbed_left = Some(obj);
+                } else {
+                    self.player.grabbed_right = Some(obj);
+                }
+            }
+        }
+    }
+
     pub fn render(&self) {
         clear_background(self.world.get_background_color());
 
         let camera_transform = self.player.get_camera_transform();
+        let eye_pos = camera_transform.position;
+        let forward = camera_transform.forward();
         
+        // Основной рендер мира
         set_camera(&Camera3D {
-            position: camera_transform.position,
+            position: eye_pos,
             up: Vec3::Y,
-            target: camera_transform.position + camera_transform.forward(),
+            target: eye_pos + forward,
             fovy: self.player.camera.fov,
             ..Default::default()
         });
 
         self.world.render();
-        crate::player::ui::render_grabbed_object(&self.player, self.ui.show_menu);
+        set_default_camera();
+        
+        // Рендер рук — отдельная камера, всегда смотрит вперёд (не вращается)
+        let hand_camera_pos = Vec3::new(0.0, 0.0, -2.0);
+        set_camera(&Camera3D {
+            position: hand_camera_pos,
+            up: Vec3::Y,
+            target: Vec3::ZERO,
+            fovy: 60.0_f32.to_radians(),
+            ..Default::default()
+        });
+        
+        // Левая рука (ЛКМ) — слева-снизу: +X (поменяно)
+        if let Some(ref grabbed) = self.player.grabbed_left {
+            let pos = Vec3::new(0.55, -0.45, 1.0);
+            draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
+            draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
+        }
+        
+        // Правая рука (ПКМ) — справа-снизу: -X (поменяно)
+        if let Some(ref grabbed) = self.player.grabbed_right {
+            let pos = Vec3::new(-0.55, -0.45, 1.0);
+            draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
+            draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
+        }
+        
         set_default_camera();
 
         crate::player::ui::render_debug_info(&self.player, &self.movement_system, self.ui.show_debug);

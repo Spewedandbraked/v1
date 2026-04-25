@@ -64,26 +64,3 @@ pub fn render_crosshair(show_menu: bool) {
     draw_line(center.x, center.y - size, center.x, center.y + size, thickness, colors::WHITE);
     draw_circle(center.x, center.y, 2.0, colors::WHITE);
 }
-
-pub fn render_grabbed_object(player: &Player, show_menu: bool) {
-    if show_menu {
-        return;
-    }
-    
-    if let Some(grabbed) = &player.grabbed_object {
-        let forward = player.transform.forward();
-        let right = player.transform.right();
-        let up = Vec3::Y;
-        let eye_pos = player.get_eye_position();
-        
-        // Позиция предмета: справа (+right), снизу (-up), впереди (+forward)
-        let item_pos = eye_pos 
-            + forward * 1.3 
-            + right * 0.55 
-            - up * 0.4;
-        
-        // Рендерим той же камерой что и мир
-        draw_cube(item_pos, grabbed.size * 0.75, None, grabbed.color);
-        draw_cube_wires(item_pos, grabbed.size * 0.75, Color::from_rgba(0, 0, 0, 120));
-    }
-}

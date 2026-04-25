@@ -17,7 +17,6 @@ pub enum Action {
     MoveDown,
     Sprint,
     Jump,
-    Interact,
 }
 
 impl Action {
@@ -35,7 +34,6 @@ impl Action {
             Action::MoveDown => KeyCode::LeftControl,
             Action::Sprint => KeyCode::LeftShift,
             Action::Jump => KeyCode::Space,
-            Action::Interact => KeyCode::E,
         }
     }
 
@@ -53,7 +51,6 @@ impl Action {
             Action::MoveDown => "Move Down",
             Action::Sprint => "Sprint",
             Action::Jump => "Jump",
-            Action::Interact => "Interact",
         }
     }
 
@@ -71,7 +68,6 @@ impl Action {
             Action::MoveDown,
             Action::Sprint,
             Action::Jump,
-            Action::Interact,
         ]
     }
 }

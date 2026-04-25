@@ -168,6 +168,11 @@ impl World {
                 Vec3::new(0.8, 0.8, 0.8),
                 Color::from_rgba(255, 100, 50, 255),
             ),
+            Interactable::new(
+                Vec3::new(0.0, 1.0, 10.0),
+                Vec3::new(0.6, 0.6, 0.6),
+                Color::from_rgba(50, 255, 100, 255),
+            ),
         ]
     }
 

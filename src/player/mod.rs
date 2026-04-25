@@ -9,6 +9,7 @@ use crate::common::{Transform, Collider};
 pub struct GrabbedObject {
     pub size: Vec3,
     pub color: Color,
+    pub world_index: usize,
 }
 
 pub struct Player {
@@ -17,7 +18,8 @@ pub struct Player {
     pub camera: camera::CameraComponent,
     pub height: f32,
     pub eye_height: f32,
-    pub grabbed_object: Option<GrabbedObject>,
+    pub grabbed_left: Option<GrabbedObject>,
+    pub grabbed_right: Option<GrabbedObject>,
 }
 
 impl Default for Player {
@@ -30,7 +32,8 @@ impl Default for Player {
             camera: camera::CameraComponent::default(),
             height,
             eye_height,
-            grabbed_object: None,
+            grabbed_left: None,
+            grabbed_right: None,
         }
     }
 }
