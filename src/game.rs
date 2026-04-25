@@ -13,6 +13,7 @@ pub struct Game {
     camera_system: CameraSystem,
     input: InputState,
     config: InputConfig,
+    bob_offset: Vec3,
 }
 
 impl Game {
@@ -26,6 +27,7 @@ impl Game {
             camera_system: CameraSystem::new(),
             input: InputState::new(),
             config: InputConfig::load(),
+            bob_offset: Vec3::ZERO,
         }
     }
 
@@ -78,6 +80,14 @@ impl Game {
         if is_mouse_button_pressed(MouseButton::Right) {
             self.handle_interact(false);
         }
+
+        // Вычисляем bob до движения
+        let is_moving = self.input.move_forward || self.input.move_backward 
+            || self.input.move_left || self.input.move_right;
+        let is_sprinting = self.input.sprint;
+        self.bob_offset = self.camera_system.calculate_bob_offset(
+            &mut self.player.camera, is_moving, is_sprinting, dt,
+        );
 
         // Физика кубов
         let gravity = -20.0;
@@ -229,7 +239,7 @@ impl Game {
         clear_background(self.world.get_background_color());
 
         let camera_transform = self.player.get_camera_transform();
-        let eye_pos = camera_transform.position;
+        let eye_pos = camera_transform.position + self.bob_offset;
         let forward = camera_transform.forward();
         
         // Основной рендер мира
@@ -244,7 +254,7 @@ impl Game {
         self.world.render();
         set_default_camera();
         
-        // Рендер рук — отдельная камера, всегда смотрит вперёд (не вращается)
+        // Рендер рук — отдельная камера
         let hand_camera_pos = Vec3::new(0.0, 0.0, -2.0);
         set_camera(&Camera3D {
             position: hand_camera_pos,
@@ -254,16 +264,16 @@ impl Game {
             ..Default::default()
         });
         
-        // Левая рука (ЛКМ) — слева-снизу: +X (поменяно)
+        // Левая рука (ЛКМ)
         if let Some(ref grabbed) = self.player.grabbed_left {
-            let pos = Vec3::new(0.9, -0.6, 0.03);
+            let pos = Vec3::new(0.55, -0.45, 0.6);
             draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
             draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
         }
         
-        // Правая рука (ПКМ) — справа-снизу: -X (поменяно)
+        // Правая рука (ПКМ)
         if let Some(ref grabbed) = self.player.grabbed_right {
-            let pos = Vec3::new(-0.9, -0.6, 0.001);
+            let pos = Vec3::new(-0.55, -0.45, 0.6);
             draw_cube(pos, grabbed.size * 0.7, None, grabbed.color);
             draw_cube_wires(pos, grabbed.size * 0.7, Color::from_rgba(0, 0, 0, 120));
         }
