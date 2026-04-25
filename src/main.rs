@@ -1,9 +1,9 @@
-mod components;
-mod entities;
-mod game;
+mod common;
 mod input;
-mod resources;
-mod systems;
+mod player;
+mod world;
+mod menu;
+mod game;
 
 use game::Game;
 use macroquad::prelude::*;
@@ -26,13 +26,10 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut game = Game::new();
-    
     loop {
         let delta_time = get_frame_time();
-        
         game.update(delta_time);
         game.render();
-        
         next_frame().await;
     }
 }

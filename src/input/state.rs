@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use crate::input::input_config::{Action, InputConfig};
+use crate::input::config::{Action, InputConfig};
 
 #[derive(Debug, Default)]
 pub struct InputState {

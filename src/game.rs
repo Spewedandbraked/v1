@@ -1,8 +1,8 @@
 use macroquad::prelude::*;
-use crate::entities::Player;
-use crate::game::{GameUI, World};
+use crate::player::{Player, movement::MovementSystem, camera::CameraSystem};
+use crate::world::{World, systems::CollisionSystem};
 use crate::input::{InputState, InputConfig, Action};
-use crate::systems::{CameraSystem, CollisionSystem, MovementSystem};
+use crate::menu::GameUI;
 
 pub struct Game {
     player: Player,
@@ -57,58 +57,28 @@ impl Game {
         if self.config.is_action_just_pressed(Action::ToggleGrid) {
             self.world.toggle_grid();
         }
-
         if self.config.is_action_just_pressed(Action::InvertX) {
             self.player.camera.invert_x = !self.player.camera.invert_x;
         }
-
         if self.config.is_action_just_pressed(Action::InvertY) {
             self.player.camera.invert_y = !self.player.camera.invert_y;
         }
-
         if self.config.is_action_just_pressed(Action::Jump) {
             self.movement_system.jump();
         }
 
-        self.movement_system.update(
-            &mut self.player.transform,
-            &self.input,
-            delta_time,
-        );
+        self.movement_system.update(&mut self.player.transform, &self.input, delta_time);
 
         self.movement_system.is_grounded = self.collision_system.check_grounded(
             &self.player.transform,
             &self.player.collider,
-            &self
-                .world
-                .platforms
-                .iter()
-                .map(|p| (p.transform, p.collider))
-                .collect::<Vec<_>>(),
+            &self.world.platforms.iter().map(|p| (p.transform, p.collider)).collect::<Vec<_>>(),
         );
 
-        self.resolve_collisions();
+        let platforms_data: Vec<_> = self.world.platforms.iter().map(|p| (p.transform, p.collider)).collect();
+        self.collision_system.resolve_collision(&mut self.player.transform, &self.player.collider, &platforms_data);
 
-        self.camera_system.update(
-            &mut self.player.transform,
-            &mut self.player.camera,
-            &self.input,
-        );
-    }
-
-    fn resolve_collisions(&mut self) {
-        let platforms_data: Vec<_> = self
-            .world
-            .platforms
-            .iter()
-            .map(|p| (p.transform, p.collider))
-            .collect();
-
-        self.collision_system.resolve_collision(
-            &mut self.player.transform,
-            &self.player.collider,
-            &platforms_data,
-        );
+        self.camera_system.update(&mut self.player.transform, &mut self.player.camera, &self.input);
     }
 
     pub fn render(&self) {
@@ -124,14 +94,10 @@ impl Game {
         });
 
         self.world.render();
-
         set_default_camera();
-        self.render_ui();
-    }
 
-    fn render_ui(&self) {
-        self.ui.render_debug_info(&self.player, &self.movement_system);
-        self.ui.render_crosshair();
+        crate::player::ui::render_debug_info(&self.player, &self.movement_system, self.ui.show_debug);
+        crate::player::ui::render_crosshair(self.ui.show_menu);
 
         if self.ui.show_menu {
             self.ui.render_menu(&self.player, &self.config);

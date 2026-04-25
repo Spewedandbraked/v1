@@ -1,10 +1,14 @@
+pub mod camera;
+pub mod movement;
+pub mod ui;
+
 use macroquad::prelude::*;
-use crate::components::{Transform, Collider, CameraComponent};
+use crate::common::{Transform, Collider};
 
 pub struct Player {
     pub transform: Transform,
     pub collider: Collider,
-    pub camera: CameraComponent,
+    pub camera: camera::CameraComponent,
     pub height: f32,
     pub eye_height: f32,
 }
@@ -13,11 +17,10 @@ impl Default for Player {
     fn default() -> Self {
         let height = 1.8;
         let eye_height = height * 0.9;
-        
         Self {
             transform: Transform::new(Vec3::new(0.0, height, 5.0)),
             collider: Collider::sphere(0.5),
-            camera: CameraComponent::default(),
+            camera: camera::CameraComponent::default(),
             height,
             eye_height,
         }
