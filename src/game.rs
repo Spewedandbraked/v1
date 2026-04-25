@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use crate::player::{Player, movement::MovementSystem, camera::CameraSystem};
+use crate::player::{Player, movement::MovementSystem, camera::CameraSystem, GrabbedObject};
 use crate::world::{World, systems::CollisionSystem};
 use crate::input::{InputState, InputConfig, Action};
 use crate::menu::GameUI;
@@ -67,6 +67,45 @@ impl Game {
             self.movement_system.jump();
         }
 
+        if self.config.is_action_just_pressed(Action::Interact) {
+            if self.player.grabbed_object.is_some() {
+                let forward = self.player.transform.forward();
+                let drop_pos = self.player.get_eye_position() + forward * 3.0;
+                if let Some(interactable) = self.world.interactables.iter_mut().find(|i| i.is_grabbed) {
+                    interactable.position = drop_pos;
+                    interactable.is_grabbed = false;
+                }
+                self.player.grabbed_object = None;
+            } else {
+                let eye_pos = self.player.get_eye_position();
+                let forward = self.player.transform.forward();
+                if let Some((idx, _)) = self.collision_system.raycast_interactable(
+                    eye_pos,
+                    forward,
+                    5.0,
+                    &self.world.interactables,
+                ) {
+                    let interactable = &mut self.world.interactables[idx];
+                    interactable.is_grabbed = true;
+                    self.player.grabbed_object = Some(GrabbedObject {
+                        position: Vec3::ZERO,
+                        size: interactable.size,
+                        color: interactable.color,
+                        original_position: interactable.position,
+                    });
+                }
+            }
+        }
+
+        if self.player.grabbed_object.is_some() {
+            let eye_pos = self.player.get_eye_position();
+            let forward = self.player.transform.forward();
+            let right = self.player.transform.right();
+            let up = Vec3::Y;
+            let grabbed = self.player.grabbed_object.as_mut().unwrap();
+            grabbed.position = eye_pos + forward * 1.5 + right * 0.5 - up * 0.3;
+        }
+
         self.movement_system.update(&mut self.player.transform, &self.input, delta_time);
 
         self.movement_system.is_grounded = self.collision_system.check_grounded(
@@ -94,6 +133,7 @@ impl Game {
         });
 
         self.world.render();
+        crate::player::ui::render_grabbed_object(&self.player, self.ui.show_menu);
         set_default_camera();
 
         crate::player::ui::render_debug_info(&self.player, &self.movement_system, self.ui.show_debug);

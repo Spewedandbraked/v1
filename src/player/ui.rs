@@ -64,3 +64,26 @@ pub fn render_crosshair(show_menu: bool) {
     draw_line(center.x, center.y - size, center.x, center.y + size, thickness, colors::WHITE);
     draw_circle(center.x, center.y, 2.0, colors::WHITE);
 }
+
+pub fn render_grabbed_object(player: &Player, show_menu: bool) {
+    if show_menu {
+        return;
+    }
+    
+    if let Some(grabbed) = &player.grabbed_object {
+        let camera_transform = player.get_camera_transform();
+        
+        set_camera(&Camera3D {
+            position: camera_transform.position,
+            up: Vec3::Y,
+            target: camera_transform.position + camera_transform.forward(),
+            fovy: player.camera.fov,
+            ..Default::default()
+        });
+        
+        draw_cube(grabbed.position, grabbed.size, None, grabbed.color);
+        draw_cube_wires(grabbed.position, grabbed.size, Color::from_rgba(0, 0, 0, 100));
+        
+        set_default_camera();
+    }
+}

@@ -1,5 +1,6 @@
 use macroquad::prelude::*;
 use crate::common::{Transform, Collider};
+use crate::world::Interactable;
 
 pub struct CollisionSystem;
 
@@ -107,5 +108,64 @@ impl CollisionSystem {
             }
         }
         false
+    }
+
+    pub fn raycast_interactable(
+        &self,
+        origin: Vec3,
+        direction: Vec3,
+        max_distance: f32,
+        interactables: &[Interactable],
+    ) -> Option<(usize, Vec3)> {
+        let mut closest_dist = max_distance;
+        let mut result = None;
+
+        for (i, interactable) in interactables.iter().enumerate() {
+            if interactable.is_grabbed {
+                continue;
+            }
+
+            let half = interactable.size * 0.5;
+            let min = interactable.position - half;
+            let max = interactable.position + half;
+
+            if let Some(hit_point) = self.ray_aabb_intersection(origin, direction, min, max) {
+                let dist = (hit_point - origin).length();
+                if dist < closest_dist {
+                    closest_dist = dist;
+                    result = Some((i, hit_point));
+                }
+            }
+        }
+
+        result
+    }
+
+    fn ray_aabb_intersection(&self, origin: Vec3, dir: Vec3, min: Vec3, max: Vec3) -> Option<Vec3> {
+        let dir_inv = Vec3::new(
+            1.0 / if dir.x.abs() > 0.0001 { dir.x } else { 0.0001 },
+            1.0 / if dir.y.abs() > 0.0001 { dir.y } else { 0.0001 },
+            1.0 / if dir.z.abs() > 0.0001 { dir.z } else { 0.0001 },
+        );
+
+        let t1 = (min.x - origin.x) * dir_inv.x;
+        let t2 = (max.x - origin.x) * dir_inv.x;
+        let t3 = (min.y - origin.y) * dir_inv.y;
+        let t4 = (max.y - origin.y) * dir_inv.y;
+        let t5 = (min.z - origin.z) * dir_inv.z;
+        let t6 = (max.z - origin.z) * dir_inv.z;
+
+        let tmin = t1.min(t2).max(t3.min(t4)).max(t5.min(t6));
+        let tmax = t1.max(t2).min(t3.max(t4)).min(t5.max(t6));
+
+        if tmax < 0.0 || tmin > tmax {
+            return None;
+        }
+
+        if tmin >= 0.0 {
+            Some(origin + dir * tmin)
+        } else {
+            Some(origin + dir * tmax)
+        }
     }
 }

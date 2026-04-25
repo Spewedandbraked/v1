@@ -5,12 +5,21 @@ pub mod ui;
 use macroquad::prelude::*;
 use crate::common::{Transform, Collider};
 
+#[derive(Clone)]
+pub struct GrabbedObject {
+    pub position: Vec3,
+    pub size: Vec3,
+    pub color: Color,
+    pub original_position: Vec3,
+}
+
 pub struct Player {
     pub transform: Transform,
     pub collider: Collider,
     pub camera: camera::CameraComponent,
     pub height: f32,
     pub eye_height: f32,
+    pub grabbed_object: Option<GrabbedObject>,
 }
 
 impl Default for Player {
@@ -23,6 +32,7 @@ impl Default for Player {
             camera: camera::CameraComponent::default(),
             height,
             eye_height,
+            grabbed_object: None,
         }
     }
 }

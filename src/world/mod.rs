@@ -39,9 +39,44 @@ pub enum DecorationType {
     FloatingSphere { radius: f32, color_offset: f32 },
 }
 
+#[derive(Debug, Clone)]
+pub struct Interactable {
+    pub position: Vec3,
+    pub size: Vec3,
+    pub color: Color,
+    pub is_grabbed: bool,
+}
+
+impl Interactable {
+    pub fn new(position: Vec3, size: Vec3, color: Color) -> Self {
+        Self {
+            position,
+            size,
+            color,
+            is_grabbed: false,
+        }
+    }
+
+    pub fn render(&self) {
+        if !self.is_grabbed {
+            let half = self.size * 0.5;
+            draw_cube(self.position, self.size, None, self.color);
+            draw_cube_wires(self.position, self.size, Color::from_rgba(0, 0, 0, 100));
+            
+            draw_sphere(
+                self.position + Vec3::new(0.0, half.y + 0.5, 0.0),
+                0.15,
+                None,
+                Color::from_rgba(255, 255, 255, 200),
+            );
+        }
+    }
+}
+
 pub struct World {
     pub platforms: Vec<Platform>,
     decorations: Vec<Decoration>,
+    pub interactables: Vec<Interactable>,
     pub grid_visible: bool,
     time: f32,
 }
@@ -51,6 +86,7 @@ impl World {
         Self {
             platforms: Self::create_platforms(),
             decorations: Self::create_decorations(),
+            interactables: Self::create_interactables(),
             grid_visible: true,
             time: 0.0,
         }
@@ -111,6 +147,21 @@ impl World {
         ]
     }
 
+    fn create_interactables() -> Vec<Interactable> {
+        vec![
+            Interactable::new(
+                Vec3::new(2.0, 1.0, 7.0),
+                Vec3::new(1.0, 1.0, 1.0),
+                Color::from_rgba(255, 50, 50, 255),
+            ),
+            Interactable::new(
+                Vec3::new(-3.0, 1.0, 8.0),
+                Vec3::new(0.8, 0.8, 0.8),
+                Color::from_rgba(255, 100, 50, 255),
+            ),
+        ]
+    }
+
     fn create_decorations() -> Vec<Decoration> {
         vec![
             Decoration {
@@ -155,6 +206,9 @@ impl World {
         self.render_decorations();
         for platform in &self.platforms {
             platform.render();
+        }
+        for interactable in &self.interactables {
+            interactable.render();
         }
     }
 
