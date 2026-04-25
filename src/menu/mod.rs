@@ -1,14 +1,12 @@
 use macroquad::prelude::*;
 use macroquad::color::colors;
-use crate::entities::Player;
-use crate::systems::MovementSystem;
 use crate::input::{InputState, InputConfig, Action};
+use crate::player::Player;
 
 const FONT_SIZE_TITLE: f32 = 40.0;
 const FONT_SIZE_SECTION: f32 = 30.0;
 const FONT_SIZE_CONTROL: f32 = 25.0;
 const FONT_SIZE_HINT: f32 = 20.0;
-const FONT_SIZE_DEBUG: f32 = 20.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MenuSection {
@@ -19,11 +17,7 @@ pub enum MenuSection {
 
 impl MenuSection {
     pub fn all() -> &'static [MenuSection] {
-        &[
-            MenuSection::Controls,
-            MenuSection::Graphics,
-            MenuSection::Audio,
-        ]
+        &[MenuSection::Controls, MenuSection::Graphics, MenuSection::Audio]
     }
 
     pub fn display_name(self) -> &'static str {
@@ -40,7 +34,7 @@ pub struct GameUI {
     pub rebinding_action: Option<Action>,
     pub show_debug: bool,
     pub current_section: MenuSection,
-    pub slider_dragging: bool,
+    slider_dragging: bool,
 }
 
 impl GameUI {
@@ -59,11 +53,12 @@ impl GameUI {
         if self.show_menu {
             input.cursor_captured = false;
             set_cursor_grab(false);
-            show_mouse(true);  // Оставить true
+            show_mouse(true);
+            self.current_section = MenuSection::Controls;
         } else {
             input.cursor_captured = true;
             set_cursor_grab(true);
-            show_mouse(false); // Оставить false
+            show_mouse(false);
             self.rebinding_action = None;
             self.slider_dragging = false;
         }
@@ -98,7 +93,8 @@ impl GameUI {
             let section_y = center.y - 220.0;
             let section_width = 120.0;
             let section_spacing = 20.0;
-            let total_width = MenuSection::all().len() as f32 * section_width + (MenuSection::all().len() as f32 - 1.0) * section_spacing;
+            let total_width = MenuSection::all().len() as f32 * section_width
+                + (MenuSection::all().len() as f32 - 1.0) * section_spacing;
             let start_x = center.x - total_width * 0.5;
 
             for (i, section) in MenuSection::all().iter().enumerate() {
@@ -118,11 +114,8 @@ impl GameUI {
                         let text = format!("{}: ...", action.display_name());
                         let size = measure_text(&text, None, FONT_SIZE_CONTROL as u16, 1.0);
                         let text_x = center.x - size.width * 0.5;
-
-                        if mouse_pos.0 >= text_x
-                            && mouse_pos.0 <= text_x + size.width
-                            && mouse_pos.1 >= y - size.height
-                            && mouse_pos.1 <= y + size.height
+                        if mouse_pos.0 >= text_x && mouse_pos.0 <= text_x + size.width
+                            && mouse_pos.1 >= y - size.height && mouse_pos.1 <= y + size.height
                         {
                             self.rebinding_action = Some(*action);
                             break;
@@ -134,9 +127,7 @@ impl GameUI {
                     let reset_size = measure_text(reset_text, None, FONT_SIZE_CONTROL as u16, 1.0);
                     let reset_x = center.x - reset_size.width * 0.5;
                     let reset_y = center.y + 180.0;
-
-                    if mouse_pos.0 >= reset_x
-                        && mouse_pos.0 <= reset_x + reset_size.width
+                    if mouse_pos.0 >= reset_x && mouse_pos.0 <= reset_x + reset_size.width
                         && mouse_pos.1 >= reset_y - reset_size.height
                         && mouse_pos.1 <= reset_y + reset_size.height
                     {
@@ -147,15 +138,12 @@ impl GameUI {
                     let slider_y = center.y;
                     let slider_width = 300.0;
                     let slider_x = center.x - slider_width * 0.5;
-                    let slider_height = 10.0;
                     let handle_radius = 12.0;
-
                     let sensitivity = player.camera.sensitivity;
                     let normalized = (sensitivity - 0.1) / 1.9;
                     let handle_x = slider_x + normalized * slider_width;
-
-                    let dist_to_handle = ((mouse_pos.0 - handle_x).powi(2) + (mouse_pos.1 - slider_y).powi(2)).sqrt();
-                    if dist_to_handle <= handle_radius {
+                    let dist = ((mouse_pos.0 - handle_x).powi(2) + (mouse_pos.1 - slider_y).powi(2)).sqrt();
+                    if dist <= handle_radius {
                         self.slider_dragging = true;
                     }
                 }
@@ -171,7 +159,6 @@ impl GameUI {
             let slider_y = center.y;
             let slider_width = 300.0;
             let slider_x = center.x - slider_width * 0.5;
-
             let mouse_x = mouse_pos.0.clamp(slider_x, slider_x + slider_width);
             let normalized = (mouse_x - slider_x) / slider_width;
             player.camera.sensitivity = 0.1 + normalized * 1.9;
@@ -182,106 +169,26 @@ impl GameUI {
         self.rebinding_action.is_some()
     }
 
-    pub fn render_debug_info(
-        &self,
-        player: &Player,
-        movement: &MovementSystem,
-    ) {
-        if !self.show_debug {
-            return;
-        }
-
-        let mut y = 30.0;
-        let line_height = 25.0;
-
-        let fps_text = format!("FPS: {:.0}", get_fps());
-        draw_text(&fps_text, 10.0, y, FONT_SIZE_DEBUG, colors::WHITE);
-        y += line_height;
-
-        let pos_text = format!(
-            "Position: {:.2}, {:.2}, {:.2}",
-            player.transform.position.x,
-            player.transform.position.y,
-            player.transform.position.z
-        );
-        draw_text(&pos_text, 10.0, y, FONT_SIZE_DEBUG, colors::WHITE);
-        y += line_height;
-
-        let vel_text = format!(
-            "Velocity: {:.2}, {:.2}, {:.2}",
-            movement.velocity.x,
-            movement.velocity.y,
-            movement.velocity.z
-        );
-        draw_text(&vel_text, 10.0, y, FONT_SIZE_DEBUG, colors::WHITE);
-        y += line_height;
-
-        let grounded_text = format!("Grounded: {}", movement.is_grounded);
-        draw_text(&grounded_text, 10.0, y, FONT_SIZE_DEBUG, colors::WHITE);
-    }
-
-    pub fn render_crosshair(&self) {
-        if self.show_menu {
-            return;
-        }
-
-        let screen_center = Vec2::new(screen_width() * 0.5, screen_height() * 0.5);
-        let crosshair_size = 10.0;
-        let thickness = 2.0;
-
-        draw_line(
-            screen_center.x - crosshair_size,
-            screen_center.y,
-            screen_center.x + crosshair_size,
-            screen_center.y,
-            thickness,
-            colors::WHITE,
-        );
-
-        draw_line(
-            screen_center.x,
-            screen_center.y - crosshair_size,
-            screen_center.x,
-            screen_center.y + crosshair_size,
-            thickness,
-            colors::WHITE,
-        );
-
-        draw_circle(screen_center.x, screen_center.y, 2.0, colors::WHITE);
-    }
-
     pub fn render_menu(&self, player: &Player, config: &InputConfig) {
         let center = Vec2::new(screen_width() * 0.5, screen_height() * 0.5);
-
         draw_rectangle(0.0, 0.0, screen_width(), screen_height(), Color::from_rgba(0, 0, 0, 200));
 
         let title = "SETTINGS";
         let title_size = measure_text(title, None, FONT_SIZE_TITLE as u16, 1.0);
-        draw_text(
-            title,
-            center.x - title_size.width * 0.5,
-            center.y - 280.0,
-            FONT_SIZE_TITLE,
-            colors::WHITE,
-        );
+        draw_text(title, center.x - title_size.width * 0.5, center.y - 280.0, FONT_SIZE_TITLE, colors::WHITE);
 
         let section_y = center.y - 220.0;
         let section_width = 120.0;
         let section_spacing = 20.0;
-        let total_width = MenuSection::all().len() as f32 * section_width + (MenuSection::all().len() as f32 - 1.0) * section_spacing;
+        let total_width = MenuSection::all().len() as f32 * section_width
+            + (MenuSection::all().len() as f32 - 1.0) * section_spacing;
         let start_x = center.x - total_width * 0.5;
 
         for (i, section) in MenuSection::all().iter().enumerate() {
             let x = start_x + i as f32 * (section_width + section_spacing);
             let is_active = self.current_section == *section;
-            let bg_color = if is_active {
-                Color::from_rgba(80, 80, 120, 255)
-            } else {
-                Color::from_rgba(40, 40, 60, 255)
-            };
-
-            draw_rectangle(x, section_y, section_width, 40.0, bg_color);
-
+            let bg = if is_active { Color::from_rgba(80, 80, 120, 255) } else { Color::from_rgba(40, 40, 60, 255) };
+            draw_rectangle(x, section_y, section_width, 40.0, bg);
             let text = section.display_name();
             let text_size = measure_text(text, None, FONT_SIZE_SECTION as u16, 1.0);
             draw_text(
@@ -293,19 +200,11 @@ impl GameUI {
             );
         }
 
-        draw_line(
-            start_x,
-            section_y + 45.0,
-            start_x + total_width,
-            section_y + 45.0,
-            2.0,
-            Color::from_rgba(100, 100, 100, 255),
-        );
+        draw_line(start_x, section_y + 45.0, start_x + total_width, section_y + 45.0, 2.0, Color::from_rgba(100, 100, 100, 255));
 
         match self.current_section {
             MenuSection::Controls => {
                 let mut y = center.y - 120.0;
-
                 for action in Action::all() {
                     let key = config.get_key(*action);
                     let text = if let Some(rebinding) = self.rebinding_action {
@@ -317,51 +216,27 @@ impl GameUI {
                     } else {
                         format!("{}: {:?}", action.display_name(), key)
                     };
-
                     let size = measure_text(&text, None, FONT_SIZE_CONTROL as u16, 1.0);
                     draw_text(
                         &text,
                         center.x - size.width * 0.5,
                         y,
                         FONT_SIZE_CONTROL,
-                        if self.rebinding_action == Some(*action) {
-                            colors::GOLD
-                        } else {
-                            Color::from_rgba(200, 200, 200, 255)
-                        },
+                        if self.rebinding_action == Some(*action) { colors::GOLD } else { Color::from_rgba(200, 200, 200, 255) },
                     );
                     y += 35.0;
                 }
-
                 let reset_text = "Reset to Defaults";
                 let reset_size = measure_text(reset_text, None, FONT_SIZE_CONTROL as u16, 1.0);
-                let reset_y = center.y + 180.0;
-                draw_text(
-                    reset_text,
-                    center.x - reset_size.width * 0.5,
-                    reset_y,
-                    FONT_SIZE_CONTROL,
-                    colors::WHITE,
-                );
+                draw_text(reset_text, center.x - reset_size.width * 0.5, center.y + 180.0, FONT_SIZE_CONTROL, colors::WHITE);
             }
             MenuSection::Graphics => {
-                let sens_label = "Mouse Sensitivity";
-                let sens_label_size = measure_text(sens_label, None, FONT_SIZE_CONTROL as u16, 1.0);
-                draw_text(
-                    sens_label,
-                    center.x - sens_label_size.width * 0.5,
-                    center.y - 40.0,
-                    FONT_SIZE_CONTROL,
-                    colors::WHITE,
-                );
-
                 let slider_y = center.y;
                 let slider_width = 300.0;
                 let slider_x = center.x - slider_width * 0.5;
                 let slider_height = 6.0;
 
                 draw_rectangle(slider_x, slider_y - slider_height * 0.5, slider_width, slider_height, Color::from_rgba(60, 60, 80, 255));
-
                 let sensitivity = player.camera.sensitivity;
                 let normalized = (sensitivity - 0.1) / 1.9;
                 let fill_width = normalized * slider_width;
@@ -372,37 +247,23 @@ impl GameUI {
                 draw_circle(handle_x, slider_y, handle_radius, colors::WHITE);
                 draw_circle_lines(handle_x, slider_y, handle_radius, 2.0, Color::from_rgba(150, 150, 150, 255));
 
+                let sens_label = "Mouse Sensitivity";
+                let sens_label_size = measure_text(sens_label, None, FONT_SIZE_CONTROL as u16, 1.0);
+                draw_text(sens_label, center.x - sens_label_size.width * 0.5, center.y - 40.0, FONT_SIZE_CONTROL, colors::WHITE);
+
                 let value_text = format!("{:.2}", sensitivity);
                 let value_size = measure_text(&value_text, None, FONT_SIZE_CONTROL as u16, 1.0);
-                draw_text(
-                    &value_text,
-                    slider_x + slider_width + 20.0,
-                    slider_y + 8.0,
-                    FONT_SIZE_CONTROL,
-                    colors::WHITE,
-                );
+                draw_text(&value_text, slider_x + slider_width + 20.0, slider_y + 8.0, FONT_SIZE_CONTROL, colors::WHITE);
             }
             MenuSection::Audio => {
-                let coming_soon = "Audio settings coming soon...";
-                let coming_soon_size = measure_text(coming_soon, None, FONT_SIZE_CONTROL as u16, 1.0);
-                draw_text(
-                    coming_soon,
-                    center.x - coming_soon_size.width * 0.5,
-                    center.y,
-                    FONT_SIZE_CONTROL,
-                    Color::from_rgba(150, 150, 150, 255),
-                );
+                let msg = "Audio settings coming soon...";
+                let msg_size = measure_text(msg, None, FONT_SIZE_CONTROL as u16, 1.0);
+                draw_text(msg, center.x - msg_size.width * 0.5, center.y, FONT_SIZE_CONTROL, Color::from_rgba(150, 150, 150, 255));
             }
         }
 
         let hint = "Press ESC to close";
         let hint_size = measure_text(hint, None, FONT_SIZE_HINT as u16, 1.0);
-        draw_text(
-            hint,
-            center.x - hint_size.width * 0.5,
-            screen_height() - 50.0,
-            FONT_SIZE_HINT,
-            Color::from_rgba(150, 150, 150, 255),
-        );
+        draw_text(hint, center.x - hint_size.width * 0.5, screen_height() - 50.0, FONT_SIZE_HINT, Color::from_rgba(150, 150, 150, 255));
     }
 }

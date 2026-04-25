@@ -1,5 +1,5 @@
-pub mod input_state;
-pub mod input_config;
+pub mod config;
+pub mod state;
 
-pub use input_state::InputState;
-pub use input_config::{Action, InputConfig};
+pub use config::*;
+pub use state::*;
