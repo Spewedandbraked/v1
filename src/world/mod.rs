@@ -48,6 +48,7 @@ pub struct Interactable {
     pub is_grabbed: bool,
     pub velocity: Vec3,
     pub is_physics_active: bool,
+    pub hit_enemies: Vec<usize>,
 }
 
 impl Interactable {
@@ -59,6 +60,7 @@ impl Interactable {
             is_grabbed: false,
             velocity: Vec3::ZERO,
             is_physics_active: false,
+            hit_enemies: Vec::new(),
         }
     }
 
@@ -106,56 +108,16 @@ impl World {
 
     fn create_platforms() -> Vec<Platform> {
         vec![
-            Platform::new(
-                Vec3::new(0.0, -0.5, 0.0),
-                Vec3::new(20.0, 1.0, 20.0),
-                Color::from_rgba(60, 60, 80, 255),
-            ),
-            Platform::new(
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(8.0, 0.5, 8.0),
-                Color::from_rgba(80, 80, 100, 255),
-            ),
-            Platform::new(
-                Vec3::new(3.0, 1.0, 4.0),
-                Vec3::new(2.0, 0.5, 2.0),
-                Color::from_rgba(255, 150, 100, 255),
-            ),
-            Platform::new(
-                Vec3::new(4.0, 2.0, 5.0),
-                Vec3::new(2.0, 0.5, 2.0),
-                Color::from_rgba(255, 150, 100, 255),
-            ),
-            Platform::new(
-                Vec3::new(5.0, 3.0, 6.0),
-                Vec3::new(2.0, 0.5, 2.0),
-                Color::from_rgba(255, 150, 100, 255),
-            ),
-            Platform::new(
-                Vec3::new(-4.0, 1.5, -3.0),
-                Vec3::new(1.0, 3.0, 1.0),
-                Color::from_rgba(150, 100, 255, 255),
-            ),
-            Platform::new(
-                Vec3::new(4.0, 1.5, -3.0),
-                Vec3::new(1.0, 3.0, 1.0),
-                Color::from_rgba(150, 100, 255, 255),
-            ),
-            Platform::new(
-                Vec3::new(0.0, 3.0, -3.0),
-                Vec3::new(5.0, 0.5, 1.5),
-                Color::from_rgba(100, 255, 150, 255),
-            ),
-            Platform::new(
-                Vec3::new(-5.0, 2.0, 5.0),
-                Vec3::new(2.0, 4.0, 2.0),
-                Color::from_rgba(255, 100, 255, 255),
-            ),
-            Platform::new(
-                Vec3::new(-5.0, 5.0, 5.0),
-                Vec3::new(3.0, 0.5, 3.0),
-                Color::from_rgba(255, 100, 255, 255),
-            ),
+            Platform::new(Vec3::new(0.0, -0.5, 0.0), Vec3::new(20.0, 1.0, 20.0), Color::from_rgba(60, 60, 80, 255)),
+            Platform::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(8.0, 0.5, 8.0), Color::from_rgba(80, 80, 100, 255)),
+            Platform::new(Vec3::new(3.0, 1.0, 4.0), Vec3::new(2.0, 0.5, 2.0), Color::from_rgba(255, 150, 100, 255)),
+            Platform::new(Vec3::new(4.0, 2.0, 5.0), Vec3::new(2.0, 0.5, 2.0), Color::from_rgba(255, 150, 100, 255)),
+            Platform::new(Vec3::new(5.0, 3.0, 6.0), Vec3::new(2.0, 0.5, 2.0), Color::from_rgba(255, 150, 100, 255)),
+            Platform::new(Vec3::new(-4.0, 1.5, -3.0), Vec3::new(1.0, 3.0, 1.0), Color::from_rgba(150, 100, 255, 255)),
+            Platform::new(Vec3::new(4.0, 1.5, -3.0), Vec3::new(1.0, 3.0, 1.0), Color::from_rgba(150, 100, 255, 255)),
+            Platform::new(Vec3::new(0.0, 3.0, -3.0), Vec3::new(5.0, 0.5, 1.5), Color::from_rgba(100, 255, 150, 255)),
+            Platform::new(Vec3::new(-5.0, 2.0, 5.0), Vec3::new(2.0, 4.0, 2.0), Color::from_rgba(255, 100, 255, 255)),
+            Platform::new(Vec3::new(-5.0, 5.0, 5.0), Vec3::new(3.0, 0.5, 3.0), Color::from_rgba(255, 100, 255, 255)),
         ]
     }
 
@@ -169,75 +131,29 @@ impl World {
 
     fn create_interactables() -> Vec<Interactable> {
         vec![
-            Interactable::new(
-                Vec3::new(2.0, 1.0, 7.0),
-                Vec3::new(1.0, 1.0, 1.0),
-                Color::from_rgba(255, 50, 50, 255),
-            ),
-            Interactable::new(
-                Vec3::new(-3.0, 1.0, 8.0),
-                Vec3::new(0.8, 0.8, 0.8),
-                Color::from_rgba(255, 100, 50, 255),
-            ),
-            Interactable::new(
-                Vec3::new(0.0, 1.0, 10.0),
-                Vec3::new(0.6, 0.6, 0.6),
-                Color::from_rgba(50, 255, 100, 255),
-            ),
+            Interactable::new(Vec3::new(2.0, 1.0, 7.0), Vec3::new(1.0, 1.0, 1.0), Color::from_rgba(255, 50, 50, 255)),
+            Interactable::new(Vec3::new(-3.0, 1.0, 8.0), Vec3::new(0.8, 0.8, 0.8), Color::from_rgba(255, 100, 50, 255)),
+            Interactable::new(Vec3::new(0.0, 1.0, 10.0), Vec3::new(0.6, 0.6, 0.6), Color::from_rgba(50, 255, 100, 255)),
         ]
     }
 
     fn create_decorations() -> Vec<Decoration> {
         vec![
-            Decoration {
-                position: Vec3::new(8.0, 5.0, 8.0),
-                decoration_type: DecorationType::FloatingSphere {
-                    radius: 0.3,
-                    color_offset: 0.0,
-                },
-            },
-            Decoration {
-                position: Vec3::new(-8.0, 4.0, 6.0),
-                decoration_type: DecorationType::FloatingSphere {
-                    radius: 0.3,
-                    color_offset: 1.0,
-                },
-            },
-            Decoration {
-                position: Vec3::new(6.0, 6.0, -8.0),
-                decoration_type: DecorationType::FloatingSphere {
-                    radius: 0.3,
-                    color_offset: 2.0,
-                },
-            },
-            Decoration {
-                position: Vec3::new(-6.0, 7.0, -6.0),
-                decoration_type: DecorationType::FloatingSphere {
-                    radius: 0.3,
-                    color_offset: 3.0,
-                },
-            },
+            Decoration { position: Vec3::new(8.0, 5.0, 8.0), decoration_type: DecorationType::FloatingSphere { radius: 0.3, color_offset: 0.0 } },
+            Decoration { position: Vec3::new(-8.0, 4.0, 6.0), decoration_type: DecorationType::FloatingSphere { radius: 0.3, color_offset: 1.0 } },
+            Decoration { position: Vec3::new(6.0, 6.0, -8.0), decoration_type: DecorationType::FloatingSphere { radius: 0.3, color_offset: 2.0 } },
+            Decoration { position: Vec3::new(-6.0, 7.0, -6.0), decoration_type: DecorationType::FloatingSphere { radius: 0.3, color_offset: 3.0 } },
         ]
     }
 
-    pub fn update(&mut self, delta_time: f32) {
-        self.time += delta_time;
-    }
+    pub fn update(&mut self, delta_time: f32) { self.time += delta_time; }
 
     pub fn render(&self) {
-        if self.grid_visible {
-            self.render_grid();
-        }
+        if self.grid_visible { self.render_grid(); }
         self.render_decorations();
-        for platform in &self.platforms {
-            platform.render();
-        }
-        for interactable in &self.interactables {
-            interactable.render();
-        }
-        for enemy in &self.enemies {
-            enemy.render();
-        }
+        for platform in &self.platforms { platform.render(); }
+        for interactable in &self.interactables { interactable.render(); }
+        for enemy in &self.enemies { enemy.render(); }
     }
 
     fn render_grid(&self) {
@@ -245,56 +161,29 @@ impl World {
         let spacing = 1.0;
         for i in -grid_size..=grid_size {
             let i = i as f32;
-            draw_line_3d(
-                Vec3::new(i * spacing, 0.01, -grid_size as f32 * spacing),
-                Vec3::new(i * spacing, 0.01, grid_size as f32 * spacing),
-                Color::from_rgba(100, 100, 100, 100),
-            );
-            draw_line_3d(
-                Vec3::new(-grid_size as f32 * spacing, 0.01, i * spacing),
-                Vec3::new(grid_size as f32 * spacing, 0.01, i * spacing),
-                Color::from_rgba(100, 100, 100, 100),
-            );
+            draw_line_3d(Vec3::new(i * spacing, 0.01, -grid_size as f32 * spacing), Vec3::new(i * spacing, 0.01, grid_size as f32 * spacing), Color::from_rgba(100, 100, 100, 100));
+            draw_line_3d(Vec3::new(-grid_size as f32 * spacing, 0.01, i * spacing), Vec3::new(grid_size as f32 * spacing, 0.01, i * spacing), Color::from_rgba(100, 100, 100, 100));
         }
     }
 
     fn render_decorations(&self) {
         for (i, decoration) in self.decorations.iter().enumerate() {
-            let DecorationType::FloatingSphere {
-                radius,
-                color_offset,
-            } = decoration.decoration_type;
+            let DecorationType::FloatingSphere { radius, color_offset } = decoration.decoration_type;
             let offset = (self.time + i as f32) * 0.5 + color_offset;
-            let color = Color::from_rgba(
-                128 + (offset.sin() * 64.0) as u8,
-                128 + (offset.cos() * 64.0) as u8,
-                200,
-                150,
-            );
+            let color = Color::from_rgba(128 + (offset.sin() * 64.0) as u8, 128 + (offset.cos() * 64.0) as u8, 200, 150);
             draw_sphere(decoration.position, radius, None, color);
         }
         for i in 0..5 {
             let angle = (self.time * 0.2 + i as f32 * 1.2) % (std::f32::consts::PI * 2.0);
             let x = angle.sin() * 10.0;
             let z = angle.cos() * 10.0;
-            draw_line_3d(
-                Vec3::new(x, 10.0, z),
-                Vec3::new(x, -1.0, z),
-                Color::from_rgba(255, 255, 200, 30),
-            );
+            draw_line_3d(Vec3::new(x, 10.0, z), Vec3::new(x, -1.0, z), Color::from_rgba(255, 255, 200, 30));
         }
     }
 
-    pub fn toggle_grid(&mut self) {
-        self.grid_visible = !self.grid_visible;
-    }
+    pub fn toggle_grid(&mut self) { self.grid_visible = !self.grid_visible; }
 
     pub fn get_background_color(&self) -> Color {
-        Color::from_rgba(
-            30 + (self.time.sin() * 5.0) as u8,
-            30 + (self.time.cos() * 5.0) as u8,
-            50 + (self.time.sin() * 0.5 * 10.0) as u8,
-            255,
-        )
+        Color::from_rgba(30 + (self.time.sin() * 5.0) as u8, 30 + (self.time.cos() * 5.0) as u8, 50 + (self.time.sin() * 0.5 * 10.0) as u8, 255)
     }
 }
