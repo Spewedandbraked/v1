@@ -10,6 +10,8 @@ pub struct CameraComponent {
     pub yaw: f32,
     pub invert_x: bool,
     pub invert_y: bool,
+    pub bob_timer: f32,
+    pub bob_amount: f32,
 }
 
 impl Default for CameraComponent {
@@ -21,6 +23,8 @@ impl Default for CameraComponent {
             yaw: 0.0,
             invert_x: true,
             invert_y: false,
+            bob_timer: 0.0,
+            bob_amount: 0.0,
         }
     }
 }
@@ -66,5 +70,39 @@ impl CameraSystem {
         camera.clamp_pitch();
 
         transform.rotation = Quat::from_rotation_y(camera.yaw) * Quat::from_rotation_x(camera.pitch);
+    }
+
+    pub fn calculate_bob_offset(
+        &self,
+        camera: &mut CameraComponent,
+        is_moving: bool,
+        is_sprinting: bool,
+        delta_time: f32,
+    ) -> Vec3 {
+        let bob_speed = if is_sprinting { 14.0 } else { 10.0 };
+        let target_amount = if is_sprinting { 0.12 } else { 0.07 };
+        
+        if is_moving {
+            camera.bob_timer += delta_time * bob_speed;
+            // Резкое нарастание
+            camera.bob_amount = camera.bob_amount + (target_amount - camera.bob_amount) * 15.0 * delta_time;
+        } else {
+            camera.bob_timer = 0.0;
+            // Резкое затухание
+            camera.bob_amount = camera.bob_amount + (0.0 - camera.bob_amount) * 15.0 * delta_time;
+        }
+        
+        // Дёрганое движение: используем резкие пики
+        let phase = camera.bob_timer;
+        let bob_x = phase.sin() * camera.bob_amount;
+        // Вертикальное: резкие провалы вниз с быстрым подъёмом
+        let raw_y = (phase * 2.0).sin();
+        let bob_y = if raw_y < 0.0 {
+            raw_y.abs().powf(0.7) * camera.bob_amount * 1.5
+        } else {
+            raw_y.powf(0.5) * camera.bob_amount * 1.2
+        };
+        
+        Vec3::new(bob_x, -bob_y, 0.0)
     }
 }

@@ -1,5 +1,6 @@
 use macroquad::prelude::*;
 use crate::common::{Transform, Collider};
+use crate::world::Interactable;
 
 pub struct CollisionSystem;
 
@@ -35,6 +36,16 @@ impl CollisionSystem {
         collided
     }
 
+    pub fn check_collision_direct(
+        &self,
+        transform_a: &Transform,
+        collider_a: &Collider,
+        transform_b: &Transform,
+        collider_b: &Collider,
+    ) -> Option<Vec3> {
+        self.check_collision(transform_a, collider_a, transform_b, collider_b)
+    }
+
     fn check_collision(
         &self,
         transform_a: &Transform,
@@ -53,7 +64,9 @@ impl CollisionSystem {
                 self.sphere_aabb(transform_b.position, sphere.radius, transform_a.position, aabb.half_extents)
                     .map(|v| -v)
             }
-            _ => None,
+            (Collider::AABB(aabb_a), Collider::AABB(aabb_b)) => {
+                self.aabb_aabb(transform_a.position, aabb_a.half_extents, transform_b.position, aabb_b.half_extents)
+            }
         }
     }
 
@@ -62,7 +75,9 @@ impl CollisionSystem {
         let dist = delta.length();
         let min_dist = r_a + r_b;
         if dist < min_dist && dist > 0.001 {
-            Some(-delta.normalize() * (min_dist - dist))
+            let dir = delta.normalize();
+            let overlap = min_dist - dist;
+            Some(dir * overlap)
         } else {
             None
         }
@@ -76,10 +91,43 @@ impl CollisionSystem {
             sphere_pos.y.clamp(min.y, max.y),
             sphere_pos.z.clamp(min.z, max.z),
         );
-        let delta = closest - sphere_pos;
+        let delta = sphere_pos - closest;
         let dist = delta.length();
         if dist < radius && dist > 0.001 {
-            Some(-delta.normalize() * (radius - dist))
+            let dir = delta.normalize();
+            let overlap = radius - dist;
+            Some(dir * overlap)
+        } else {
+            None
+        }
+    }
+
+    fn aabb_aabb(&self, pos_a: Vec3, half_a: Vec3, pos_b: Vec3, half_b: Vec3) -> Option<Vec3> {
+        let min_a = pos_a - half_a;
+        let max_a = pos_a + half_a;
+        let min_b = pos_b - half_b;
+        let max_b = pos_b + half_b;
+
+        let overlap_x = (max_a.x.min(max_b.x) - min_a.x.max(min_b.x)).max(0.0);
+        let overlap_y = (max_a.y.min(max_b.y) - min_a.y.max(min_b.y)).max(0.0);
+        let overlap_z = (max_a.z.min(max_b.z) - min_a.z.max(min_b.z)).max(0.0);
+
+        if overlap_x > 0.0 && overlap_y > 0.0 && overlap_z > 0.0 {
+            let center_a = pos_a;
+            let center_b = pos_b;
+            let delta = center_b - center_a;
+            
+            let mut penetration = Vec3::ZERO;
+            
+            if overlap_x <= overlap_y && overlap_x <= overlap_z {
+                penetration.x = if delta.x > 0.0 { -overlap_x } else { overlap_x };
+            } else if overlap_y <= overlap_x && overlap_y <= overlap_z {
+                penetration.y = if delta.y > 0.0 { -overlap_y } else { overlap_y };
+            } else {
+                penetration.z = if delta.z > 0.0 { -overlap_z } else { overlap_z };
+            }
+            
+            Some(penetration)
         } else {
             None
         }
@@ -107,5 +155,64 @@ impl CollisionSystem {
             }
         }
         false
+    }
+
+    pub fn raycast_interactable(
+        &self,
+        origin: Vec3,
+        direction: Vec3,
+        max_distance: f32,
+        interactables: &[Interactable],
+    ) -> Option<(usize, Vec3)> {
+        let mut closest_dist = max_distance;
+        let mut result = None;
+
+        for (i, interactable) in interactables.iter().enumerate() {
+            if interactable.is_grabbed {
+                continue;
+            }
+
+            let half = interactable.size * 0.5;
+            let min = interactable.position - half;
+            let max = interactable.position + half;
+
+            if let Some(hit_point) = self.ray_aabb_intersection(origin, direction, min, max) {
+                let dist = (hit_point - origin).length();
+                if dist < closest_dist {
+                    closest_dist = dist;
+                    result = Some((i, hit_point));
+                }
+            }
+        }
+
+        result
+    }
+
+    fn ray_aabb_intersection(&self, origin: Vec3, dir: Vec3, min: Vec3, max: Vec3) -> Option<Vec3> {
+        let dir_inv = Vec3::new(
+            1.0 / if dir.x.abs() > 0.0001 { dir.x } else { 0.0001 },
+            1.0 / if dir.y.abs() > 0.0001 { dir.y } else { 0.0001 },
+            1.0 / if dir.z.abs() > 0.0001 { dir.z } else { 0.0001 },
+        );
+
+        let t1 = (min.x - origin.x) * dir_inv.x;
+        let t2 = (max.x - origin.x) * dir_inv.x;
+        let t3 = (min.y - origin.y) * dir_inv.y;
+        let t4 = (max.y - origin.y) * dir_inv.y;
+        let t5 = (min.z - origin.z) * dir_inv.z;
+        let t6 = (max.z - origin.z) * dir_inv.z;
+
+        let tmin = t1.min(t2).max(t3.min(t4)).max(t5.min(t6));
+        let tmax = t1.max(t2).min(t3.max(t4)).min(t5.max(t6));
+
+        if tmax < 0.0 || tmin > tmax {
+            return None;
+        }
+
+        if tmin >= 0.0 {
+            Some(origin + dir * tmin)
+        } else {
+            Some(origin + dir * tmax)
+        }
     }
 }

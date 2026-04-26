@@ -4,6 +4,7 @@ mod player;
 mod world;
 mod menu;
 mod game;
+mod enemy;
 
 use game::Game;
 use macroquad::prelude::*;
